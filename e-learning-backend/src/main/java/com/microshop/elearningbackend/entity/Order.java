@@ -6,6 +6,7 @@ import lombok.Setter;
 import org.hibernate.annotations.ColumnDefault;
 
 import java.time.Instant;
+import java.time.LocalDateTime;
 
 @Getter
 @Setter
@@ -33,7 +34,7 @@ public class Order {
 
     @ColumnDefault("getdate()")
     @Column(name = "OrderDate", nullable = false)
-    private Instant orderDate;
+    private LocalDateTime orderDate;
 
     @Column(name = "Status", length = 50)
     private String status;

@@ -6,6 +6,7 @@ import lombok.Setter;
 import org.hibernate.annotations.Nationalized;
 
 import java.time.Instant;
+import java.time.LocalDateTime;
 
 @Getter
 @Setter
@@ -33,7 +34,7 @@ public class User {
     private Boolean sex;
 
     @Column(name = "Birthday")
-    private Instant birthday;
+    private LocalDateTime birthday;
 
     @Column(name = "Email", nullable = false, length = 300)
     private String email;

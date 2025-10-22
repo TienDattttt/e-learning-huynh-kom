@@ -7,6 +7,7 @@ import org.hibernate.annotations.ColumnDefault;
 import org.hibernate.annotations.Nationalized;
 
 import java.time.Instant;
+import java.time.LocalDateTime;
 
 @Getter
 @Setter
@@ -46,7 +47,7 @@ public class Cours {
 
     @ColumnDefault("getdate()")
     @Column(name = "DateCreated", nullable = false)
-    private Instant dateCreated;
+    private LocalDateTime dateCreated;
 
     @ColumnDefault("0")
     @Column(name = "Status", nullable = false)

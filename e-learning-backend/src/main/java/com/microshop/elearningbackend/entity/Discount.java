@@ -5,6 +5,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.time.Instant;
+import java.time.LocalDateTime;
 
 @Getter
 @Setter
@@ -19,10 +20,10 @@ public class Discount {
     private Integer id;
 
     @Column(name = "FromDate")
-    private Instant fromDate;
+    private LocalDateTime fromDate;
 
     @Column(name = "ToDate")
-    private Instant toDate;
+    private LocalDateTime toDate;
 
     @Column(name = "CodeDiscount", nullable = false, length = 50)
     private String codeDiscount;
