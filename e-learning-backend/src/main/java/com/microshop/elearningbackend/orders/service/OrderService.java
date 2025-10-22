@@ -2,6 +2,7 @@ package com.microshop.elearningbackend.orders.service;
 
 import com.microshop.elearningbackend.common.exception.ApiException;
 import com.microshop.elearningbackend.courses.repository.CourseRepository;
+import com.microshop.elearningbackend.discounts.repository.DiscountCourseRepository;
 import com.microshop.elearningbackend.discounts.repository.DiscountRepository;
 import com.microshop.elearningbackend.entity.Cours;
 import com.microshop.elearningbackend.entity.Discount;
@@ -21,6 +22,8 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.time.format.DateTimeFormatter;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -31,6 +34,7 @@ public class OrderService {
     private final CourseRepository courseRepo;
     private final UserRepository userRepo;
     private final DiscountRepository discountRepo;
+    private final DiscountCourseRepository discountCourseRepo;
 
     /* =============================
        PUBLIC API (Controller calls)
@@ -53,7 +57,7 @@ public class OrderService {
         Discount voucher = (req.voucherCode() != null && !req.voucherCode().isBlank())
                 ? resolveValidVoucher(req.voucherCode())
                 : null;
-        long finalAmount = applyDiscount(baseAmount, voucher);
+        long finalAmount = applyDiscountForCourse(baseAmount, voucher, course.getId());
 
         // Lưu Order + OrderDetail (auto thanh toán thành công)
         Order order = createOrder(user, req.payMethod(), finalAmount);
@@ -127,28 +131,45 @@ public class OrderService {
         return d;
     }
 
-    private long applyDiscount(long baseAmount, Discount voucher) {
+    private long applyDiscountForCourse(long baseAmount, Discount voucher, Integer courseId) {
         if (voucher == null) return baseAmount;
+
+        // Nếu voucher có gắn ít nhất 1 course, thì chỉ áp dụng cho những course nằm trong mapping
+        boolean hasMapping = discountCourseRepo.existsAnyCourseLinked(voucher.getId());
+        if (hasMapping && !discountCourseRepo.existsLink(voucher.getId(), courseId)) {
+            return baseAmount; // không thuộc mapping -> không giảm
+        }
+
+        // Áp dụng giảm giá
         if (voucher.getDiscountPercent() != null) {
             long off = Math.round(baseAmount * (voucher.getDiscountPercent() / 100.0));
-            long pay = baseAmount - off;
-            return Math.max(pay, 0L);
+            return Math.max(baseAmount - off, 0L);
         }
         if (voucher.getDiscountAmount() != null) {
-            long pay = baseAmount - voucher.getDiscountAmount();
-            return Math.max(pay, 0L);
+            return Math.max(baseAmount - voucher.getDiscountAmount(), 0L);
         }
         return baseAmount;
     }
 
+    private String generateOrderCode() {
+        // Ví dụ: ORD-20251022-220559-3F7A1C8B
+        String ts = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss"));
+        String rand = UUID.randomUUID().toString().replace("-", "").substring(0,8).toUpperCase();
+        return "ORD-" + ts + "-" + rand;
+    }
+
+
     private Order createOrder(User user, String payMethod, long finalAmount) {
         Order o = new Order();
+
+        // TẠO MÃ ĐƠN HÀNG DUY NHẤT
+        o.setOrderCode(generateOrderCode());
+
         o.setUsers(user);
-        o.setPayMethod(payMethod == null || payMethod.isBlank() ? "AUTO" : payMethod);
+        o.setPayMethod((payMethod == null || payMethod.isBlank()) ? "AUTO" : payMethod);
         o.setOrderDate(LocalDateTime.now());
         o.setStatus("SUCCESS"); // auto thành công (tích hợp cổng sau)
         o.setTotalAmount(finalAmount);
-        // OrderCode có thể gen theo nhu cầu (để trống/unique random)
         return orderRepo.save(o);
     }
 
