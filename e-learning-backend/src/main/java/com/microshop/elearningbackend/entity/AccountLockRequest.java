@@ -9,6 +9,7 @@ import org.hibernate.annotations.ColumnDefault;
 import org.hibernate.annotations.Nationalized;
 
 import java.time.Instant;
+import java.time.LocalDateTime;
 
 @Getter
 @Setter
@@ -49,11 +50,11 @@ public class AccountLockRequest {
     @NotNull
     @ColumnDefault("getdate()")
     @Column(name = "CreatedAt", nullable = false)
-    private Instant createdAt;
+    private LocalDateTime createdAt;
 
     @NotNull
     @ColumnDefault("getdate()")
     @Column(name = "UpdatedAt", nullable = false)
-    private Instant updatedAt;
+    private LocalDateTime updatedAt;
 
 }
