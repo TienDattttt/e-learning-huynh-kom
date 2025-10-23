@@ -84,7 +84,7 @@ public class TeacherStudentService {
 
     @Transactional(readOnly = true)
     public ApiPage<StudentListItemDto> listStudents(Integer teacherId, Integer courseId, int page, int size) {
-        validateTeacher(teacherId);
+        ensureTeacherRole(requireUser(teacherId)); // <--- thêm đảm bảo role
         if (courseId != null) validateCourseBelongsToTeacher(courseId, teacherId);
 
         var p = teacherStudentRepo.findStudentsOfTeacher(teacherId, courseId, PageRequest.of(page, size));
@@ -112,7 +112,7 @@ public class TeacherStudentService {
 
     @Transactional(readOnly = true)
     public StudentProgressDetailDto studentProgressDetail(Integer teacherId, Integer courseId, Integer studentId) {
-        validateTeacher(teacherId);
+        ensureTeacherRole(requireUser(teacherId)); // <--- thêm đảm bảo role
         if (courseId == null) throw new ApiException("courseId is required");
         validateCourseBelongsToTeacher(courseId, teacherId);
         if (!teacherStudentRepo.studentBelongsToTeacher(teacherId, studentId, courseId)) {
@@ -146,9 +146,8 @@ public class TeacherStudentService {
 
     @Transactional
     public LockAccountResponseDto requestLockAccount(LockAccountRequestDto req) {
-        validateTeacher(req.teacherId());
+        ensureTeacherRole(requireUser(req.teacherId())); // <--- thêm đảm bảo role
         validateStudent(req.studentId());
-        // Ít nhất học viên phải có 1 khóa thuộc teacher
         if (!teacherStudentRepo.studentBelongsToTeacher(req.teacherId(), req.studentId(), null)) {
             throw new ApiException("This student has no purchases in your courses");
         }

@@ -17,7 +17,6 @@ import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
-
 @Service
 @RequiredArgsConstructor
 public class LearningService {
@@ -44,27 +43,21 @@ public class LearningService {
         Map<Integer, LearningProgress> myProgress = progressMap(userId, courseId);
 
         Double overall = calculateOverallProgress(myProgress);
-
         return toCourseLearningDetail(course, chapters, lessonsByChapter, myProgress, overall);
     }
-    private void validateSaveProgressInput(SaveProgressRequest req) {
-        if (req.userId() == null) throw new ApiException("userId is required");
-        if (req.courseId() == null) throw new ApiException("courseId is required");
-        if (req.lessonId() == null) throw new ApiException("lessonId is required");
-        // progressPercent có thể null -> normalize về 0 trong normalizePercent()
-    }
 
+    // New: dùng JWT userId truyền vào, thẩm định với req (nếu req.userId có giá trị khác thì báo lỗi)
     @Transactional
-    public SaveProgressResponse saveProgress(SaveProgressRequest req) {
-        validateSaveProgressInput(req);
-        ensurePurchased(req.userId(), req.courseId());
+    public SaveProgressResponse saveProgressFor(Integer currentUserId, SaveProgressRequest req) {
+        validateSaveProgressInputForCurrent(currentUserId, req);
+        ensurePurchased(currentUserId, req.courseId());
 
         CourseLesson lesson = requireLesson(req.lessonId());
         if (!lesson.getChapter().getCourse().getId().equals(req.courseId())) {
             throw new ApiException("Lesson does not belong to the given course");
         }
 
-        LearningProgress lp = upsertProgress(req, lesson);
+        LearningProgress lp = upsertProgress(currentUserId, req, lesson);
         return new SaveProgressResponse(lp.getId(), lp.getProgressPercent(), lp.getIsCompleted());
     }
 
@@ -79,6 +72,15 @@ public class LearningService {
     /* =====================
        PRIVATE HELPERS (SRP)
        ===================== */
+
+    private void validateSaveProgressInputForCurrent(Integer currentUserId, SaveProgressRequest req) {
+        if (req.courseId() == null) throw new ApiException("courseId is required");
+        if (req.lessonId() == null) throw new ApiException("lessonId is required");
+        // Nếu client gửi req.userId và KHÁC với JWT -> chặn
+        if (req.userId() != null && !req.userId().equals(currentUserId)) {
+            throw new ApiException("userId in request does not match current token");
+        }
+    }
 
     private void validateUserCourse(Integer userId, Integer courseId) {
         if (userId == null) throw new ApiException("userId is required");
@@ -119,6 +121,38 @@ public class LearningService {
         return sum / myProgress.size();
     }
 
+    /** Upsert pattern: có thì update, không có thì insert */
+    private LearningProgress upsertProgress(Integer currentUserId, SaveProgressRequest req, CourseLesson lesson) {
+        int p = normalizePercent(req.progressPercent());
+        boolean done = (req.completed() != null && req.completed()) || p >= 100;
+
+        LearningProgress lp = progressRepo
+                .findByUser_IdAndLesson_Id(currentUserId, req.lessonId())
+                .orElseGet(LearningProgress::new);
+
+        if (lp.getId() == null) {
+            // create
+            User u = new User(); u.setId(currentUserId);
+            Cours c = new Cours(); c.setId(req.courseId());
+
+            lp.setUser(u);
+            lp.setCourse(c);
+            lp.setLesson(lesson);
+        }
+
+        lp.setProgressPercent(p);
+        lp.setIsCompleted(done);
+        lp.setUpdatedAt(LocalDateTime.now());
+        return progressRepo.save(lp);
+    }
+
+    private int normalizePercent(Integer percent) {
+        if (percent == null) return 0;
+        if (percent < 0) return 0;
+        if (percent > 100) return 100;
+        return percent;
+    }
+
     private CourseLearningDetailDto toCourseLearningDetail(
             Cours c,
             List<Chapter> chapters,
@@ -157,6 +191,7 @@ public class LearningService {
             LearningProgress lp = myProgress.get(ls.getId());
             int percent = (lp != null) ? lp.getProgressPercent() : 0;
             boolean completed = (lp != null) && Boolean.TRUE.equals(lp.getIsCompleted());
+
             result.add(new LessonProgressDto(
                     ls.getId(),
                     ls.getName(),
@@ -169,37 +204,5 @@ public class LearningService {
             ));
         }
         return result;
-    }
-
-    /** Upsert pattern: có thì update, không có thì insert */
-    private LearningProgress upsertProgress(SaveProgressRequest req, CourseLesson lesson) {
-        int p = normalizePercent(req.progressPercent());
-        boolean done = (req.completed() != null && req.completed()) || p >= 100;
-
-        LearningProgress lp = progressRepo
-                .findByUser_IdAndLesson_Id(req.userId(), req.lessonId())
-                .orElseGet(LearningProgress::new);
-
-        if (lp.getId() == null) {
-            // create
-            User u = new User(); u.setId(req.userId());
-            Cours c = new Cours(); c.setId(req.courseId());
-
-            lp.setUser(u);
-            lp.setCourse(c);
-            lp.setLesson(lesson);
-        }
-
-        lp.setProgressPercent(p);
-        lp.setIsCompleted(done);
-        lp.setUpdatedAt(LocalDateTime.now());
-        return progressRepo.save(lp);
-    }
-
-    private int normalizePercent(Integer percent) {
-        if (percent == null) return 0;
-        if (percent < 0) return 0;
-        if (percent > 100) return 100;
-        return percent;
     }
 }

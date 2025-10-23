@@ -1,5 +1,6 @@
 package com.microshop.elearningbackend.orders.service;
 
+import com.microshop.elearningbackend.auth.service.CurrentUserService;
 import com.microshop.elearningbackend.common.exception.ApiException;
 import com.microshop.elearningbackend.courses.repository.CourseRepository;
 import com.microshop.elearningbackend.discounts.repository.DiscountCourseRepository;
@@ -20,9 +21,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
-import java.time.format.DateTimeFormatter;
 import java.util.UUID;
 
 @Service
@@ -35,37 +36,45 @@ public class OrderService {
     private final UserRepository userRepo;
     private final DiscountRepository discountRepo;
     private final DiscountCourseRepository discountCourseRepo;
+    private final CurrentUserService current;
 
     /* =============================
        PUBLIC API (Controller calls)
        ============================= */
 
+    /**
+     * Luồng mới: Mua khóa học cho HỌC VIÊN hiện tại (đọc userId từ JWT).
+     */
     @Transactional
-    public BuyCourseResponse buy(BuyCourseRequest req) {
-        validateBuyInput(req);
-
-        User user = requireUser(req.userId());
-        Cours course = requirePublishedCourse(req.courseId());
-
-        // Đã mua chưa?
-        if (orderDetailRepo.existsPurchasedCourse(user.getId(), course.getId())) {
-            return new BuyCourseResponse(null, "ALREADY_OWNED", 0L);
-        }
-
-        // Tính giá (áp dụng promotionPrice, voucher nếu có và hợp lệ)
-        long baseAmount = calcBaseAmount(course);
-        Discount voucher = (req.voucherCode() != null && !req.voucherCode().isBlank())
-                ? resolveValidVoucher(req.voucherCode())
-                : null;
-        long finalAmount = applyDiscountForCourse(baseAmount, voucher, course.getId());
-
-        // Lưu Order + OrderDetail (auto thanh toán thành công)
-        Order order = createOrder(user, req.payMethod(), finalAmount);
-        createOrderDetail(order, course, voucher, baseAmount, finalAmount);
-
-        return new BuyCourseResponse(order.getId(), "SUCCESS", finalAmount);
+    public BuyCourseResponse buyForCurrentUser(BuyCourseRequest req) {
+        Integer currentUserId = current.requireCurrentUserId();
+        return buyInternal(currentUserId, req);
     }
 
+    /**
+     * Luồng mới: Lấy danh sách khóa đã mua cho HỌC VIÊN hiện tại (đọc userId từ JWT).
+     */
+    @Transactional(readOnly = true)
+    public List<MyCourseDto> myCoursesForCurrentUser() {
+        Integer currentUserId = current.requireCurrentUserId();
+        return myCourses(currentUserId);
+    }
+
+    /**
+     * (Legacy) Luồng cũ còn đọc userId từ request.
+     * Khuyến nghị KHÔNG dùng nữa. Để tránh vỡ build nếu nơi khác còn gọi.
+     */
+    @Deprecated
+    @Transactional
+    public BuyCourseResponse buy(BuyCourseRequest req) {
+        if (req.userId() == null) throw new ApiException("userId is required (legacy flow). Use buyForCurrentUser()");
+        return buyInternal(req.userId(), req);
+    }
+
+    /**
+     * (Legacy) Lấy danh sách khóa đã mua theo userId truyền vào.
+     * Khuyến nghị dùng myCoursesForCurrentUser() thay vì truyền userId từ client.
+     */
     @Transactional(readOnly = true)
     public List<MyCourseDto> myCourses(Integer userId) {
         if (userId == null) throw new ApiException("userId is required");
@@ -91,10 +100,39 @@ public class OrderService {
        PRIVATE HELPERS (Decomposition)
        ============================= */
 
-    private void validateBuyInput(BuyCourseRequest req) {
-        if (req.userId() == null) throw new ApiException("userId is required");
+    /**
+     * Core mua hàng: đã chuẩn hóa để luôn nhận userId nội bộ (từ JWT hoặc legacy).
+     */
+    @Transactional
+    protected BuyCourseResponse buyInternal(Integer userId, BuyCourseRequest req) {
+
+        validateBuyInputForCurrent(req);
+
+        User user = requireUser(userId);
+        Cours course = requirePublishedCourse(req.courseId());
+
+        // Đã mua chưa?
+        if (orderDetailRepo.existsPurchasedCourse(user.getId(), course.getId())) {
+            return new BuyCourseResponse(null, "ALREADY_OWNED", 0L);
+        }
+
+        // Tính giá (áp dụng promotionPrice, voucher nếu có và hợp lệ)
+        long baseAmount = calcBaseAmount(course);
+        Discount voucher = (req.voucherCode() != null && !req.voucherCode().isBlank())
+                ? resolveValidVoucher(req.voucherCode())
+                : null;
+        long finalAmount = applyDiscountForCourse(baseAmount, voucher, course.getId());
+
+        // Lưu Order + OrderDetail (auto thanh toán thành công)
+        Order order = createOrder(user, req.payMethod(), finalAmount);
+        createOrderDetail(order, course, voucher, baseAmount, finalAmount);
+
+        return new BuyCourseResponse(order.getId(), "SUCCESS", finalAmount);
+    }
+
+    private void validateBuyInputForCurrent(BuyCourseRequest req) {
         if (req.courseId() == null) throw new ApiException("courseId is required");
-        // payMethod tạm optional; mặc định "AUTO"
+        // userId KHÔNG còn đọc từ client
     }
 
     private User requireUser(Integer id) {
@@ -154,10 +192,9 @@ public class OrderService {
     private String generateOrderCode() {
         // Ví dụ: ORD-20251022-220559-3F7A1C8B
         String ts = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss"));
-        String rand = UUID.randomUUID().toString().replace("-", "").substring(0,8).toUpperCase();
+        String rand = UUID.randomUUID().toString().replace("-", "").substring(0, 8).toUpperCase();
         return "ORD-" + ts + "-" + rand;
     }
-
 
     private Order createOrder(User user, String payMethod, long finalAmount) {
         Order o = new Order();
@@ -183,9 +220,5 @@ public class OrderService {
         d.setTotalAmount(totalAmount);
         orderDetailRepo.save(d);
         // KHÔNG add vào order.getOrderDetails() vì entity Order không có collection
-    }
-
-    private LocalDateTime toLocalDateTime(LocalDateTime dt) {
-        return dt; // entity Order.orderDate của bạn là LocalDateTime (theo schema)
     }
 }

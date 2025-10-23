@@ -1,4 +1,5 @@
 package com.microshop.elearningbackend.courses.service;
+import com.microshop.elearningbackend.auth.service.CurrentUserService;
 
 import com.microshop.elearningbackend.categories.repository.CourseCategoryRepository;
 import com.microshop.elearningbackend.common.exception.ApiException;
@@ -31,6 +32,7 @@ public class CourseService {
     private final CourseLessonRepository lessonRepo;
     private final CourseCategoryRepository categoryRepo;
     private final UserRepository userRepo;
+    private final CurrentUserService current;
 
 
     /* =========================
@@ -40,10 +42,25 @@ public class CourseService {
     @Transactional
     public Integer saveCourse(SaveCourseRequest req) {
         validateCourseInput(req);
+
+        // Lấy user từ JWT
+        User teacher = current.getCurrentUser()
+                .orElseThrow(() -> new ApiException("UNAUTHORIZED"));
+
+        // bắt buộc role GiangVien
+        ensureTeacherRole(teacher);
+
         Cours entity = (req.courseId() == null) ? new Cours() : requireCourse(req.courseId());
 
+        // Nếu update -> kiểm tra quyền sở hữu
+        if (entity.getId() != null) {
+            ensureOwner(entity, teacher.getId());
+        } else {
+            entity.setUsers(teacher); // set owner lần đầu tạo
+        }
+
         mapCourseFields(entity, req);
-        ensureCourseRelationsManyToOne(entity, req.categoryId(), req.teacherId());
+        ensureCourseRelationsManyToOne(entity, req.categoryId()); // KHÔNG còn teacherId
 
         if (entity.getDateCreated() == null) {
             entity.setDateCreated(LocalDateTime.now());
@@ -51,10 +68,18 @@ public class CourseService {
         return courseRepo.save(entity).getId();
     }
 
+
     @Transactional
     public Integer publishCourse(Integer courseId, Boolean publish) {
         if (courseId == null) throw new ApiException("courseId is required");
+
+        User teacher = current.getCurrentUser()
+                .orElseThrow(() -> new ApiException("UNAUTHORIZED"));
+        ensureTeacherRole(teacher);
+
         Cours course = requireCourse(courseId);
+        ensureOwner(course, teacher.getId());
+
         course.setStatus(Boolean.TRUE.equals(publish));
         return courseRepo.save(course).getId();
     }
@@ -92,8 +117,15 @@ public class CourseService {
     @Transactional
     public Integer saveChapter(SaveChapterRequest req) {
         validateChapterInput(req);
+        User teacher = current.getCurrentUser()
+                .orElseThrow(() -> new ApiException("UNAUTHORIZED"));
+        ensureTeacherRole(teacher);
+
         Chapter entity = (req.chapterId() == null) ? new Chapter() : requireChapter(req.chapterId());
         Cours course = requireCourse(req.courseId());
+
+        // course phải thuộc owner hiện tại
+        ensureOwner(course, teacher.getId());
 
         entity.setNameChapter(req.nameChapter());
         entity.setOrderChapter(req.orderChapter());
@@ -102,11 +134,20 @@ public class CourseService {
         return chapterRepo.save(entity).getId();
     }
 
+
     @Transactional
     public Integer saveLesson(SaveLessonRequest req) {
         validateLessonInput(req);
+        User teacher = current.getCurrentUser()
+                .orElseThrow(() -> new ApiException("UNAUTHORIZED"));
+        ensureTeacherRole(teacher);
+
         CourseLesson entity = (req.courseLessonId() == null) ? new CourseLesson() : requireLesson(req.courseLessonId());
         Chapter chapter = requireChapter(req.chapterId());
+        Cours course = chapter.getCourse();
+
+        // lesson thuộc chapter -> chapter thuộc course -> course phải thuộc teacher hiện tại
+        ensureOwner(course, teacher.getId());
 
         entity.setName(req.name());
         entity.setSortOrder(req.sortOrder());
@@ -117,6 +158,7 @@ public class CourseService {
 
         return lessonRepo.save(entity).getId();
     }
+
 
     public CourseDetailDto getPublicCourseDetail(Integer courseId) {
         if (courseId == null) throw new ApiException("courseId is required");
@@ -198,9 +240,20 @@ public class CourseService {
     private void validateCourseInput(SaveCourseRequest req) {
         if (req.name() == null || req.name().isBlank())
             throw new ApiException("Course name is required");
-        if (req.teacherId() == null)
-            throw new ApiException("teacherId is required (Auth chưa tích hợp)");
+        // KHÔNG còn check teacherId
     }
+    private void ensureTeacherRole(User u) {
+        if (u.getRole() == null || !"GiangVien".equalsIgnoreCase(u.getRole().getRoleName())) {
+            throw new ApiException("FORBIDDEN: require teacher role");
+        }
+    }
+
+    private void ensureOwner(Cours c, Integer teacherId) {
+        if (c.getUsers() == null || !teacherId.equals(c.getUsers().getId())) {
+            throw new ApiException("You are not owner of this course");
+        }
+    }
+
 
     private void mapCourseFields(Cours entity, SaveCourseRequest req) {
         entity.setName(req.name().trim());
@@ -212,8 +265,8 @@ public class CourseService {
         if (entity.getStatus() == null) entity.setStatus(Boolean.FALSE); // Draft mặc định
     }
 
-    /** Thiết lập ManyToOne theo entity scaffold: fields = categories, users */
-    private void ensureCourseRelationsManyToOne(Cours entity, Integer categoryId, Integer teacherId) {
+    /** Thiết lập ManyToOne: chỉ còn categories; owner lấy từ JWT ở saveCourse */
+    private void ensureCourseRelationsManyToOne(Cours entity, Integer categoryId) {
         if (categoryId != null) {
             CourseCategory cat = new CourseCategory();
             cat.setId(categoryId);
@@ -221,11 +274,9 @@ public class CourseService {
         } else {
             entity.setCategories(null);
         }
-
-        User teacher = new User();
-        teacher.setId(teacherId);
-        entity.setUsers(teacher);
+        // KHÔNG set entity.setUsers(...) ở đây (đã set ở saveCourse khi tạo mới).
     }
+
 
     private Cours requireCourse(Integer id) {
         return courseRepo.findById(id).orElseThrow(() -> new ApiException("Course not found: id=" + id));

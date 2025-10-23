@@ -2,6 +2,7 @@ package com.microshop.elearningbackend.reporting.service;
 
 import com.itextpdf.text.*;
 import com.itextpdf.text.pdf.*;
+import com.microshop.elearningbackend.auth.service.CurrentUserService;
 import com.microshop.elearningbackend.common.exception.ApiException;
 import com.microshop.elearningbackend.reporting.dto.*;
 import com.microshop.elearningbackend.reporting.repository.ReportingDao;
@@ -13,14 +14,13 @@ import java.io.ByteArrayOutputStream;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
-import java.util.ArrayList;
-import java.util.List;
 
 @Service
 @RequiredArgsConstructor
 public class ReportingService {
 
-    private final ReportingDao repo; // <--- đổi sang DAO
+    private final ReportingDao repo;
+    private final CurrentUserService currentUser; // <--- THÊM DÒNG NÀY
 
     @Transactional(readOnly = true)
     public RevenueSummaryResponse summarize(RevenueSummaryRequest req) {
@@ -134,7 +134,7 @@ public class ReportingService {
         }
     }
 
-    // ================= SRP helpers =================
+    // ====== helpers ======
 
     private record Normalized(LocalDateTime start, LocalDateTime end,
                               Integer courseId, Integer teacherId,
@@ -145,7 +145,18 @@ public class ReportingService {
         LocalDateTime start = (req.start() == null) ? end.minusDays(30) : req.start();
         if (!end.isAfter(start)) throw new ApiException("end must be after start");
         var groupBy = (req.groupBy() == null) ? RevenueSummaryRequest.GroupBy.DAY : req.groupBy();
-        return new Normalized(start, end, req.courseId(), req.teacherId(), groupBy);
+
+        // ---- ÁP PHẠM VI THEO QUYỀN ----
+        // Nếu là Giảng viên -> ép teacherId = id trong JWT (bỏ qua giá trị client gửi lên)
+        boolean isTeacher = currentUser.currentAuthorities()
+                .stream().anyMatch(a -> "ROLE_GiangVien".equalsIgnoreCase(a.getAuthority()));
+        Integer teacherId = req.teacherId();
+        if (isTeacher) {
+            teacherId = currentUser.requireCurrentUserId();
+        }
+        // Admin thì giữ nguyên teacherId client gửi (có thể null)
+
+        return new Normalized(start, end, req.courseId(), teacherId, groupBy);
     }
 
     private static String csv(String s) {
