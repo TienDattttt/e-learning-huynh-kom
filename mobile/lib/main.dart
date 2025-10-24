@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:online_course/core/services/injection_container.dart';
+import 'package:online_course/src/features/auth/presentation/pages/login_page.dart';
+import 'package:online_course/src/features/auth/presentation/pages/register_page.dart';
 import 'package:online_course/src/features/course/pesentation/bloc/explore/course_bloc.dart';
 import 'package:online_course/src/features/course/pesentation/bloc/favorite_course/favorite_course_bloc.dart';
 import 'package:online_course/src/features/course/pesentation/bloc/feature/feature_course_bloc.dart';
@@ -32,7 +34,12 @@ class MyApp extends StatelessWidget {
         theme: ThemeData(
           primaryColor: AppColor.primary,
         ),
-        home: const RootApp(),
+        initialRoute: '/login',
+        routes: {
+          '/login': (_) => const LoginPage(),
+          '/register': (_) => const RegisterPage(),
+          '/root': (_) => const RootApp(),
+        },
       ),
     );
   }
