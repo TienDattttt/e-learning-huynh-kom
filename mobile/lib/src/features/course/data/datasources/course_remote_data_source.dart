@@ -1,52 +1,21 @@
-import 'package:online_course/core/errors/exception.dart';
-import 'package:online_course/core/utils/dummy_data.dart';
-import 'package:online_course/src/features/course/data/models/course_model.dart';
+import 'package:dio/dio.dart';
+import 'package:online_course/core/network/dio_client.dart';
+import '../models/course_model.dart';
 
 abstract class CourseRemoteDataSource {
-  Future<List<CourseModel>> getCourses();
-  Future<List<CourseModel>> getFeaturedCourses();
-  Future<List<CourseModel>> getRecommendCourses();
+  Future<List<CourseModel>> getCourses({int page, int size});
 }
 
 class CourseRemoteDataSourceImpl implements CourseRemoteDataSource {
-  CourseRemoteDataSourceImpl();
+  final Dio _dio = DioClient.createDio();
 
   @override
-  Future<List<CourseModel>> getCourses() async {
-    //==== Todo: implement the call to real api =====
-    try {
-      // dummy data
-      return coursesData.map((e) => CourseModel.fromMap(e)).toList();
-
-      // final result = await http.get(Uri.parse(NetworkUrls.getCourses));
-      // if (result.statusCode == 200) {
-      //   return CourseMapper.jsonToCourseModelList(result.body);
-      // }
-      // return [];
-    } catch (e) {
-      throw ServerException();
-    }
-  }
-
-  @override
-  Future<List<CourseModel>> getFeaturedCourses() async {
-    //==== Todo: implement the call to real api =====
-    try {
-      // dummy data
-      return featuresData.map((e) => CourseModel.fromMap(e)).toList();
-    } catch (e) {
-      throw ServerException();
-    }
-  }
-
-  @override
-  Future<List<CourseModel>> getRecommendCourses() async {
-    //==== Todo: implement the call to real api =====
-    try {
-      // dummy data
-      return recommendsData.map((e) => CourseModel.fromMap(e)).toList();
-    } catch (e) {
-      throw ServerException();
-    }
+  Future<List<CourseModel>> getCourses({int page = 0, int size = 20}) async {
+    final resp = await _dio.get(
+      "/courses/public/list",
+      queryParameters: {"page": page, "size": size},
+    );
+    final list = (resp.data['data']?['content'] as List?) ?? [];
+    return list.map((e) => CourseModel.fromJson(e)).toList();
   }
 }

@@ -1,82 +1,115 @@
 import 'package:flutter/material.dart';
+import 'package:online_course/src/features/course/domain/entities/course_detail.dart';
 import 'package:online_course/src/theme/app_color.dart';
 
-import '../../../../../../widgets/custom_image.dart';
-
 class LessonItem extends StatelessWidget {
-  const LessonItem({Key? key, required this.data}) : super(key: key);
-  final Map data;
+  const LessonItem({
+    super.key,
+    required this.lesson,
+    required this.purchased,
+  });
+
+  final CourseLesson lesson;
+  final bool purchased;
+
+  IconData _iconByType(String type) {
+    final t = type.toLowerCase();
+    if (t.contains('video')) return Icons.play_circle_fill_rounded;
+    if (t.contains('doc') || t.contains('pdf')) return Icons.description_rounded;
+    return Icons.menu_book_rounded;
+    // fallback
+  }
 
   @override
   Widget build(BuildContext context) {
+    final locked = !purchased; // Option A: show all nhưng khóa nếu chưa mua
+    final icon = _iconByType(lesson.type);
+
     return Container(
-        margin: const EdgeInsets.all(5),
-        padding: const EdgeInsets.all(10),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(20),
-          color: Colors.white,
-          boxShadow: [
-            BoxShadow(
-              color: AppColor.shadowColor.withOpacity(0.05),
-              spreadRadius: 1,
-              blurRadius: 1,
-              offset: const Offset(1, 1), // changes position of shadow
+      margin: const EdgeInsets.all(5),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(16),
+        color: Colors.white,
+        boxShadow: [
+          BoxShadow(
+            color: AppColor.shadowColor.withOpacity(0.05),
+            spreadRadius: 1,
+            blurRadius: 1,
+            offset: const Offset(1, 1),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          // Icon theo type thay vì ảnh
+          Container(
+            height: 54,
+            width: 54,
+            decoration: BoxDecoration(
+              color: AppColor.primary.withOpacity(.1),
+              shape: BoxShape.circle,
             ),
-          ],
-        ),
-        child: Row(
-          children: [
-            CustomImage(
-              data["image"],
-              radius: 10,
-              height: 70,
-              width: 70,
-            ),
-            const SizedBox(
-              width: 10,
-            ),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    data["name"],
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                        color: AppColor.textColor,
-                        fontSize: 14,
-                        fontWeight: FontWeight.w500),
+            child: Icon(icon, color: AppColor.primary, size: 28),
+          ),
+          const SizedBox(width: 12),
+          // Info
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  lesson.name,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: AppColor.textColor,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
                   ),
-                  const SizedBox(
-                    height: 10,
-                  ),
-                  Row(
-                    children: [
-                      const Icon(
-                        Icons.schedule_rounded,
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    Icon(
+                      lesson.type.toLowerCase().contains('video')
+                          ? Icons.play_arrow_rounded
+                          : Icons.description_outlined,
+                      color: AppColor.labelColor,
+                      size: 16,
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      lesson.type,
+                      style: const TextStyle(
+                        fontSize: 13,
                         color: AppColor.labelColor,
-                        size: 14,
                       ),
-                      const SizedBox(
-                        width: 2,
-                      ),
+                    ),
+                    const Spacer(),
+                    // progress (nếu có)
+                    if (lesson.progressPercent != null)
                       Text(
-                        data["duration"],
+                        "${(lesson.progressPercent! * 100).toStringAsFixed(0)}%",
                         style: const TextStyle(
-                            fontSize: 13, color: AppColor.labelColor),
+                          fontSize: 12,
+                          color: AppColor.labelColor,
+                        ),
                       ),
-                    ],
-                  ),
-                ],
-              ),
+                  ],
+                ),
+              ],
             ),
-            const Icon(
-              Icons.arrow_forward_ios_outlined,
-              color: AppColor.labelColor,
-              size: 15,
-            ),
-          ],
-        ));
+          ),
+          const SizedBox(width: 8),
+          // Arrow or Lock
+          Icon(
+            locked ? Icons.lock_rounded : Icons.arrow_forward_ios_rounded,
+            color: AppColor.labelColor,
+            size: 18,
+          ),
+        ],
+      ),
+    );
   }
 }

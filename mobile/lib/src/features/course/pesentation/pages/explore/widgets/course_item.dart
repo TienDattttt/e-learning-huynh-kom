@@ -44,11 +44,7 @@ class CourseItem extends StatelessWidget {
         child: Stack(
           children: [
             _buildCourseImage(),
-            Positioned(
-              top: 170,
-              right: 15,
-              child: _buildFavoriteButton(),
-            ),
+
             Positioned(
               top: 210,
               child: _buildCourseInfo(),
@@ -59,29 +55,6 @@ class CourseItem extends StatelessWidget {
     );
   }
 
-  Widget _buildFavoriteButton() {
-    return BlocConsumer<FavoriteCourseBloc, FavoriteCourseState>(
-      listener: (context, state) {
-        if (state is FavoiriteCourseError) {
-          AppUtil.showSnackbar(
-              context: context, message: "Something went wrong.");
-        }
-      },
-      buildWhen: (previous, current) {
-        return current is FavoiriteCourseLoaded &&
-            current.course.id == course.id;
-      },
-      builder: (context, state) {
-        return FavoriteBoxV2(
-          isFavorited: course.isFavorited,
-          onTap: () {
-            BlocProvider.of<FavoriteCourseBloc>(context)
-                .add(ToggleFavoriteCourse(course));
-          },
-        );
-      },
-    );
-  }
 
   Widget _buildCourseInfo() {
     return Container(
@@ -90,55 +63,61 @@ class CourseItem extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                course.name,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  fontSize: 17,
-                  color: AppColor.textColor,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ],
+          Text(
+            course.name,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              fontSize: 17,
+              color: AppColor.textColor,
+              fontWeight: FontWeight.w600,
+            ),
           ),
-          const SizedBox(
-            height: 10,
+          const SizedBox(height: 6),
+          // Chỉ còn 1 dòng giá (đã dùng promotionPrice trong mapper)
+          Text(
+            _formatPrice(course.price),
+            style: const TextStyle(
+              fontSize: 16,
+              color: AppColor.primary,
+              fontWeight: FontWeight.w700,
+            ),
           ),
-          _buildAttributeBlock(),
         ],
       ),
     );
   }
 
+  // Bạn có thể dùng AppUtil riêng của bạn nếu có formatCurrency.
+  String _formatPrice(String v) {
+    // Nếu bạn có AppUtil.formatCurrency, dùng như sau:
+    // return AppUtil.formatCurrency(int.tryParse(v) ?? 0);
+    final n = int.tryParse(v) ?? 0;
+    // format đơn giản: 900000 -> "900.000đ"
+    final s = n.toString().replaceAllMapped(
+      RegExp(r'(\d)(?=(\d{3})+(?!\d))'),
+          (m) => '${m[1]}.',
+    );
+    return '$sđ';
+  }
+
+
   Widget _buildCourseImage() {
     return Hero(
       tag: '${course.id}${course.image}',
-      child: CustomImage(
-        course.image,
-        width: width,
-        height: 190,
-        radius: 15,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(15),
+        child: Image.asset(
+          "${course.image}",
+          width: width,
+          height: 190,
+          fit: BoxFit.cover,
+        ),
       ),
     );
   }
 
-  Widget _buildAttributeBlock() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        _buildAttribute(Icons.sell_outlined, AppColor.labelColor, course.price),
-        _buildAttribute(
-            Icons.play_circle_outlined, AppColor.labelColor, course.session),
-        _buildAttribute(
-            Icons.schedule_rounded, AppColor.labelColor, course.duration),
-        _buildAttribute(Icons.star, AppColor.yellow, course.review),
-      ],
-    );
-  }
+
 
   Widget _buildAttribute(IconData icon, Color color, String info) {
     return Row(

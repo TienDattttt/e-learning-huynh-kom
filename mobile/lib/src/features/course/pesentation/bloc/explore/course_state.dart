@@ -1,35 +1,30 @@
-part of 'course_bloc.dart';
+import 'package:equatable/equatable.dart';
+import '../../../domain/entities/course.dart';
 
-class CourseState extends Equatable {
+abstract class CourseState extends Equatable {
   const CourseState();
   @override
-  List<Object> get props => [];
+  List<Object?> get props => [];
 }
 
-class GetCourseState extends CourseState {
-  const GetCourseState();
+class CourseInitial extends CourseState {
+  const CourseInitial();
 }
 
-class GetCourseInitial extends GetCourseState {
-  const GetCourseInitial();
+class CourseLoading extends CourseState {
+  const CourseLoading();
 }
 
-class GetCoursesLoading extends GetCourseState {
-  const GetCoursesLoading();
-}
-
-class GetCoursesLoaded extends GetCourseState {
-  const GetCoursesLoaded(this.courses);
-
+class CourseLoaded extends CourseState {
   final List<Course> courses;
+  const CourseLoaded(this.courses);
   @override
-  List<Object> get props => [courses];
+  List<Object?> get props => [courses];
 }
 
-class GetCoursesError extends GetCourseState {
-  const GetCoursesError(this.errorMessage);
-
-  final String errorMessage;
+class CourseError extends CourseState {
+  final String message;
+  const CourseError(this.message);
   @override
-  List<Object> get props => [errorMessage];
+  List<Object?> get props => [message];
 }

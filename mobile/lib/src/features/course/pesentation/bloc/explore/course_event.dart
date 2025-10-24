@@ -1,12 +1,11 @@
-part of 'course_bloc.dart';
+import 'package:equatable/equatable.dart';
 
-sealed class CourseEvent extends Equatable {
+abstract class CourseEvent extends Equatable {
   const CourseEvent();
-
   @override
-  List<Object> get props => [];
+  List<Object?> get props => [];
 }
 
-class GetCourses extends CourseEvent {
-  const GetCourses();
+class LoadCourseEvent extends CourseEvent {
+  const LoadCourseEvent();
 }

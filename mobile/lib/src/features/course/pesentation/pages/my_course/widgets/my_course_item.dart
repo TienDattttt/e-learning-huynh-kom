@@ -1,22 +1,27 @@
 import 'package:flutter/material.dart';
+import 'package:online_course/src/features/course/domain/entities/my_course.dart';
 import 'package:online_course/src/theme/app_color.dart';
-import '../../../../../../widgets/custom_image.dart';
+import 'package:online_course/src/widgets/custom_image.dart';
 
 class MyCourseItem extends StatelessWidget {
-  const MyCourseItem(
-      {required this.data,
-      Key? key,
-      this.progressColor = AppColor.blue,
-      this.completedPercent = 0.0})
-      : super(key: key);
-  final Map data;
+  const MyCourseItem({
+    required this.data,
+    Key? key,
+    this.progressColor = AppColor.blue,
+    this.onTap,
+  }) : super(key: key);
+
+  final MyCourse data;
   final Color progressColor;
-  final double completedPercent;
+  final GestureTapCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
         padding: const EdgeInsets.all(10),
+        margin: const EdgeInsets.symmetric(vertical: 6, horizontal: 12),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(20),
           color: Colors.white,
@@ -25,73 +30,55 @@ class MyCourseItem extends StatelessWidget {
               color: AppColor.shadowColor.withOpacity(0.1),
               spreadRadius: 1,
               blurRadius: 1,
-              offset: const Offset(0, 0), // changes position of shadow
             ),
           ],
         ),
-        child: _buildCourseInfo());
-  }
-
-  Widget _buildCourseInfo() {
-    return Row(
-      children: [
-        CustomImage(
-          data["image"],
-          radius: 10,
-          height: 70,
-          width: 70,
-        ),
-        const SizedBox(
-          width: 10,
-        ),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                data["name"],
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                    color: AppColor.textColor,
-                    fontSize: 15,
-                    fontWeight: FontWeight.w500),
+        child: Row(
+          children: [
+            ClipRRect(
+              borderRadius: BorderRadius.circular(10),
+              child: Image.asset(
+                data.image,
+                width: 70,
+                height: 70,
+                fit: BoxFit.cover,
               ),
-              const SizedBox(
-                height: 10,
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(data.name,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                          fontSize: 15, fontWeight: FontWeight.w500)),
+                  const SizedBox(height: 6),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(data.completedLabel, style: TextStyle(color: progressColor)),
+                      Visibility(
+                        visible: data.progress < 100,
+                        child: Text(data.progressLabel,
+                            style: const TextStyle(fontSize: 12, color: AppColor.labelColor)),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 7),
+                  LinearProgressIndicator(
+                    value: data.progressPercent,
+                    backgroundColor: progressColor.withOpacity(.2),
+                    valueColor: AlwaysStoppedAnimation<Color>(progressColor),
+                  ),
+                ],
               ),
-              _buildProgressLessonBlock(),
-              const SizedBox(
-                height: 7,
-              ),
-              LinearProgressIndicator(
-                value: data["complete_percent"].toDouble() ?? 0.0,
-                backgroundColor: progressColor.withOpacity(.2),
-                valueColor: AlwaysStoppedAnimation<Color>(progressColor),
-              )
-            ],
-          ),
+            )
+          ],
         ),
-      ],
-    );
-  }
-
-  Widget _buildProgressLessonBlock() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Text(
-          data["completed"],
-          style: TextStyle(color: progressColor),
-        ),
-        Visibility(
-          visible: data["complete_percent"] < 1,
-          child: Text(
-            data["progress"],
-            style: const TextStyle(color: AppColor.labelColor),
-          ),
-        ),
-      ],
+      ),
     );
   }
 }
+

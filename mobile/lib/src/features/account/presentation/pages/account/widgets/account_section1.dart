@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:online_course/core/utils/app_navigate.dart';
 import 'package:online_course/src/features/account/presentation/pages/account/widgets/setting_item.dart';
-import 'package:online_course/src/features/course/pesentation/pages/favorite/favorite.dart';
 import 'package:online_course/src/theme/app_color.dart';
 
 class AccountBlock1 extends StatelessWidget {
@@ -53,9 +52,9 @@ class AccountBlock1 extends StatelessWidget {
             title: "Favorites",
             leadingIcon: "assets/icons/bookmark.svg",
             bgIconColor: AppColor.primary,
-            onTap: () {
-              AppNavigator.to(context, const FavoritePage());
-            },
+            // onTap: () {
+            //   AppNavigator.to(context, const FavoritePage());
+            // },
           ),
         ],
       ),

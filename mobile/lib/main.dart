@@ -4,9 +4,9 @@ import 'package:online_course/core/services/injection_container.dart';
 import 'package:online_course/src/features/auth/presentation/pages/login_page.dart';
 import 'package:online_course/src/features/auth/presentation/pages/register_page.dart';
 import 'package:online_course/src/features/course/pesentation/bloc/explore/course_bloc.dart';
+import 'package:online_course/src/features/course/pesentation/bloc/my_course/my_course_bloc.dart';
+import 'package:online_course/src/features/course/pesentation/bloc/detail/course_detail_bloc.dart';
 import 'package:online_course/src/features/course/pesentation/bloc/favorite_course/favorite_course_bloc.dart';
-import 'package:online_course/src/features/course/pesentation/bloc/feature/feature_course_bloc.dart';
-import 'package:online_course/src/features/course/pesentation/bloc/recommend/recommend_course_bloc.dart';
 import 'package:online_course/src/root_app.dart';
 import 'src/theme/app_color.dart';
 
@@ -24,9 +24,9 @@ class MyApp extends StatelessWidget {
     return MultiBlocProvider(
       providers: [
         BlocProvider(create: (_) => locator.get<CourseBloc>()),
-        BlocProvider(create: (_) => locator.get<FeatureCourseBloc>()),
-        BlocProvider(create: (_) => locator.get<RecommendCourseBloc>()),
         BlocProvider(create: (_) => locator.get<FavoriteCourseBloc>()),
+        BlocProvider(create: (_) => locator.get<MyCourseBloc>()),
+        BlocProvider(create: (_) => locator.get<CourseDetailBloc>()),
       ],
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
