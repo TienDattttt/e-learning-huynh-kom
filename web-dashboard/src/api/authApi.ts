@@ -1,4 +1,17 @@
 import axios from 'axios';
+import { jwtDecode } from "d:/e-learning-huynh-kom/web-dashboard/node_modules/jwt-decode/build/esm/index";
+
+interface JwtPayload {
+  uid: number;
+  // other fields
+}
+
+export const getTeacherId = () => {
+  const token = localStorage.getItem('accessToken');
+  if (!token) return null;
+  const decoded = jwtDecode<JwtPayload>(token);
+  return decoded.uid;
+};
 
 const API_BASE_URL = 'http://localhost:8080/api/auth'; // Có thể thay bằng env variable sau
 
