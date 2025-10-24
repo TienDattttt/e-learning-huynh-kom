@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { GraduationCap, UserCircle, Shield } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 
 const Index = () => {
   const navigate = useNavigate();
@@ -71,6 +71,11 @@ const Index = () => {
               </Button>
             </CardContent>
           </Card>
+        </div>
+        <div className="text-center mt-8">
+          <p className="text-muted-foreground">
+            Ready to get started? <Link to="/register" className="text-primary hover:underline">Register</Link> or <Link to="/login" className="text-primary hover:underline">Login</Link>
+          </p>
         </div>
       </div>
     </div>
