@@ -30,7 +30,7 @@ class MyApp extends StatelessWidget {
       ],
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
-        title: 'E-Learninggg App',
+        title: 'E-Learning App',
         theme: ThemeData(
           primaryColor: AppColor.primary,
         ),
