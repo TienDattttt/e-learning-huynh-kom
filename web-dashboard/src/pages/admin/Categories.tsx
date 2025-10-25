@@ -1,4 +1,5 @@
-import { useState } from "react";
+// src/pages/admin/Categories.tsx
+import { useEffect, useState } from "react";
 import { DashboardLayout } from "@/components/layouts/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -17,9 +18,17 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { Plus, Edit, Trash2 } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
@@ -27,45 +36,177 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Plus, Edit, Trash2 } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
+import { useForm } from "react-hook-form";
+import * as z from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { getCategoryTree, saveCategory, CategoryNode, SaveCategoryRequest } from "@/api/categoryApi";
 
-interface Category {
+interface FlatCategory {
   id: number;
   name: string;
+  displayName: string;
   parentCategory: string | null;
-  description: string;
-  courseCount: number;
+  parentId: number | null;
+  sortOrder: number | null;
+  status: boolean;
 }
 
-const mockCategories: Category[] = [
-  { id: 1, name: "IT", parentCategory: null, description: "Information Technology courses", courseCount: 45 },
-  { id: 2, name: "Programming", parentCategory: "IT", description: "Programming languages", courseCount: 30 },
-  { id: 3, name: "Java", parentCategory: "Programming", description: "Java development", courseCount: 12 },
-  { id: 4, name: "Python", parentCategory: "Programming", description: "Python programming", courseCount: 18 },
-  { id: 5, name: "Business", parentCategory: null, description: "Business and management", courseCount: 25 },
-];
+interface SelectOption {
+  value: string;
+  label: string;
+}
+
+const formSchema = z.object({
+  name: z.string().min(1, { message: "Category name is required" }),
+  parentId: z.string().optional(),
+  sortOrder: z.number().optional(),
+});
 
 export default function Categories() {
-  const [categories, setCategories] = useState<Category[]>(mockCategories);
+  const [tree, setTree] = useState<CategoryNode[]>([]);
+  const [categories, setCategories] = useState<FlatCategory[]>([]);
+  const [options, setOptions] = useState<SelectOption[]>([]);
   const [isOpen, setIsOpen] = useState(false);
+  const [currentCategory, setCurrentCategory] = useState<FlatCategory | null>(null);
   const { toast } = useToast();
 
-  const handleAddCategory = () => {
-    toast({
-      title: "Category added",
-      description: "The category has been successfully added.",
-    });
-    setIsOpen(false);
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      name: "",
+      parentId: "none",
+      sortOrder: 0,
+    },
+  });
+
+  const fetchTree = async () => {
+    try {
+      const data = await getCategoryTree();
+      setTree(data);
+      const flat = flattenCategories(data);
+      setCategories(flat);
+      const opts = buildCategoryOptions(data);
+      setOptions([{ value: "none", label: "None (Root Category)" }, ...opts]);
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to load categories.",
+        variant: "destructive",
+      });
+    }
   };
 
-  const handleDelete = (id: number) => {
-    setCategories(categories.filter((cat) => cat.id !== id));
-    toast({
-      title: "Category deleted",
-      description: "The category has been removed.",
-      variant: "destructive",
-    });
+  useEffect(() => {
+    fetchTree();
+  }, []);
+
+  useEffect(() => {
+    if (currentCategory) {
+      form.reset({
+        name: currentCategory.name,
+        parentId: currentCategory.parentId ? currentCategory.parentId.toString() : "none",
+        sortOrder: currentCategory.sortOrder ?? 0,
+      });
+    } else {
+      form.reset({
+        name: "",
+        parentId: "none",
+        sortOrder: 0,
+      });
+    }
+  }, [currentCategory, form]);
+
+  const flattenCategories = (nodes: CategoryNode[], level: number = 0, parentCategory: string | null = null): FlatCategory[] => {
+    let result: FlatCategory[] = [];
+    for (const node of nodes) {
+      const displayName = level > 0 ? '  '.repeat(level) + '└─ ' + node.name : node.name;
+      result.push({
+        id: node.id,
+        name: node.name,
+        displayName,
+        parentCategory,
+        parentId: node.parentId,
+        sortOrder: node.sortOrder,
+        status: node.status,
+      });
+      if (node.children.length > 0) {
+        result = result.concat(flattenCategories(node.children, level + 1, node.name));
+      }
+    }
+    return result;
+  };
+
+  const buildCategoryOptions = (nodes: CategoryNode[], indent: string = ""): SelectOption[] => {
+    let result: SelectOption[] = [];
+    for (const node of nodes) {
+      result.push({ value: node.id.toString(), label: indent + node.name });
+      if (node.children.length > 0) {
+        result = result.concat(buildCategoryOptions(node.children, indent + "── "));
+      }
+    }
+    return result;
+  };
+
+  const onSubmit = async (values: z.infer<typeof formSchema>) => {
+    try {
+      const parentId = values.parentId === "none" ? null : parseInt(values.parentId);
+      const req: SaveCategoryRequest = {
+        courseCategoryId: currentCategory?.id ?? null,
+        name: values.name,
+        parentId,
+        sortOrder: values.sortOrder ?? null,
+        status: true,
+      };
+      await saveCategory(req);
+      toast({
+        title: currentCategory ? "Category updated" : "Category added",
+        description: "The category has been successfully saved.",
+      });
+      setIsOpen(false);
+      setCurrentCategory(null);
+      fetchTree();
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to save category.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleDelete = async (cat: FlatCategory) => {
+    try {
+      const req: SaveCategoryRequest = {
+        courseCategoryId: cat.id,
+        name: cat.name,
+        parentId: cat.parentId,
+        sortOrder: cat.sortOrder,
+        status: false,
+      };
+      await saveCategory(req);
+      toast({
+        title: "Category deleted",
+        description: "The category has been removed (soft delete).",
+        variant: "destructive",
+      });
+      fetchTree();
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to delete category.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const openAddDialog = () => {
+    setCurrentCategory(null);
+    setIsOpen(true);
+  };
+
+  const openEditDialog = (cat: FlatCategory) => {
+    setCurrentCategory(cat);
+    setIsOpen(true);
   };
 
   return (
@@ -78,41 +219,77 @@ export default function Categories() {
           </div>
           <Dialog open={isOpen} onOpenChange={setIsOpen}>
             <DialogTrigger asChild>
-              <Button>
+              <Button onClick={openAddDialog}>
                 <Plus className="mr-2 h-4 w-4" />
                 Add Category
               </Button>
             </DialogTrigger>
             <DialogContent>
               <DialogHeader>
-                <DialogTitle>Add New Category</DialogTitle>
+                <DialogTitle>{currentCategory ? "Edit Category" : "Add New Category"}</DialogTitle>
               </DialogHeader>
-              <div className="space-y-4">
-                <div>
-                  <Label htmlFor="name">Category Name</Label>
-                  <Input id="name" placeholder="e.g., Web Development" />
-                </div>
-                <div>
-                  <Label htmlFor="parent">Parent Category (Optional)</Label>
-                  <Select>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select parent category" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="none">None (Root Category)</SelectItem>
-                      <SelectItem value="it">IT</SelectItem>
-                      <SelectItem value="business">Business</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <Label htmlFor="description">Description</Label>
-                  <Textarea id="description" placeholder="Category description" />
-                </div>
-                <Button onClick={handleAddCategory} className="w-full">
-                  Create Category
-                </Button>
-              </div>
+              <Form {...form}>
+                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                  <FormField
+                    control={form.control}
+                    name="name"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Category Name</FormLabel>
+                        <FormControl>
+                          <Input placeholder="e.g., Web Development" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="parentId"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Parent Category (Optional)</FormLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select parent category" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {options.map((opt) => (
+                              <SelectItem key={opt.value} value={opt.value}>
+                                {opt.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="sortOrder"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Sort Order (Optional)</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="number"
+                            placeholder="0"
+                            {...field}
+                            onChange={(e) => field.onChange(e.target.value ? parseInt(e.target.value) : undefined)}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <Button type="submit" className="w-full">
+                    {currentCategory ? "Update Category" : "Create Category"}
+                  </Button>
+                </form>
+              </Form>
             </DialogContent>
           </Dialog>
         </div>
@@ -127,26 +304,22 @@ export default function Categories() {
                 <TableRow>
                   <TableHead>Name</TableHead>
                   <TableHead>Parent Category</TableHead>
-                  <TableHead>Description</TableHead>
-                  <TableHead>Courses</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {categories.map((category) => (
                   <TableRow key={category.id}>
-                    <TableCell className="font-medium">{category.name}</TableCell>
+                    <TableCell className="font-medium">{category.displayName}</TableCell>
                     <TableCell>{category.parentCategory || "Root"}</TableCell>
-                    <TableCell className="max-w-xs truncate">{category.description}</TableCell>
-                    <TableCell>{category.courseCount}</TableCell>
                     <TableCell className="text-right">
-                      <Button variant="ghost" size="icon">
+                      <Button variant="ghost" size="icon" onClick={() => openEditDialog(category)}>
                         <Edit className="h-4 w-4" />
                       </Button>
                       <Button
                         variant="ghost"
                         size="icon"
-                        onClick={() => handleDelete(category.id)}
+                        onClick={() => handleDelete(category)}
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
