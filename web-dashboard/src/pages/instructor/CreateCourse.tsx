@@ -1,4 +1,4 @@
-// Updated CreateCourse.jsx
+// src/pages/instructor/CreateCourse.tsx
 import { useState, useEffect } from "react";
 import { DashboardLayout } from "@/components/layouts/DashboardLayout";
 import { Button } from "@/components/ui/button";
@@ -18,6 +18,7 @@ import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate, useParams } from "react-router-dom";
 import { saveFullCourse, getCourseDetail, deleteChapter, deleteLesson, getCategories } from "@/api/courseApi";
+import { getDiscountList, attachCourses, DiscountDto } from "@/api/discountApi";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Loader2 } from "lucide-react";
 
@@ -53,6 +54,13 @@ interface CategoryOption {
   label: string;
 }
 
+interface VoucherOption {
+  value: string;
+  label: string;
+  percent?: number;
+  amount?: number;
+}
+
 const flattenCategories = (nodes: CategoryNode[], prefix: string = ''): CategoryOption[] => {
   let options: CategoryOption[] = [];
   for (let node of nodes) {
@@ -73,9 +81,11 @@ export default function CreateCourse() {
   const [price, setPrice] = useState(0);
   const [promotionPrice, setPromotionPrice] = useState(0);
   const [categoryId, setCategoryId] = useState<number | null>(null);
+  const [selectedVoucherId, setSelectedVoucherId] = useState<number | null>(null);
   const [publish, setPublish] = useState(false);
   const [chapters, setChapters] = useState<Chapter[]>([]);
   const [categories, setCategories] = useState<CategoryOption[]>([]);
+  const [vouchers, setVouchers] = useState<VoucherOption[]>([]);
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -97,6 +107,28 @@ export default function CreateCourse() {
       }
     };
     fetchCategories();
+  }, [toast]);
+
+  useEffect(() => {
+    const fetchVouchers = async () => {
+      try {
+        const data: DiscountDto[] = await getDiscountList();
+        const activeVouchers = data.filter(v => v.active);
+        setVouchers(activeVouchers.map(v => ({
+          value: v.discountId.toString(),
+          label: `${v.code} (${v.percent ? `${v.percent}%` : `$${v.amount}`})`,
+          percent: v.percent,
+          amount: v.amount
+        })));
+      } catch (error) {
+        toast({
+          title: "Error loading vouchers",
+          description: "Could not fetch active vouchers.",
+          variant: "destructive",
+        });
+      }
+    };
+    fetchVouchers();
   }, [toast]);
 
   useEffect(() => {
@@ -143,6 +175,27 @@ export default function CreateCourse() {
       fetchData();
     }
   }, [courseId, isEdit, toast]);
+
+  // Tự động tính lại promotionPrice khi thay đổi price hoặc selectedVoucherId
+  useEffect(() => {
+    if (selectedVoucherId === null) {
+      setPromotionPrice(0); // Hoặc có thể giữ nguyên giá trị hiện tại nếu không chọn voucher
+      return;
+    }
+
+    const selectedVoucher = vouchers.find(opt => parseInt(opt.value) === selectedVoucherId);
+    if (!selectedVoucher) return;
+
+    let newPromo = price;
+    if (selectedVoucher.percent !== undefined && selectedVoucher.percent > 0) {
+      newPromo = price * (1 - selectedVoucher.percent / 100);
+    } else if (selectedVoucher.amount !== undefined && selectedVoucher.amount > 0) {
+      newPromo = price - selectedVoucher.amount;
+    }
+
+    // Làm tròn đến 2 chữ số thập phân và đảm bảo không âm
+    setPromotionPrice(Math.max(0, parseFloat(newPromo.toFixed(2))));
+  }, [price, selectedVoucherId, vouchers]);
 
   const addChapter = () => {
     setChapters([
@@ -270,9 +323,14 @@ export default function CreateCourse() {
             sortOrder: lsIndex + 1,
           })),
         })),
+        discountIds: selectedVoucherId ? [selectedVoucherId] : null,
       };
 
-      await saveFullCourse(fullReq, imageFile);
+      const savedCourseId = await saveFullCourse(fullReq, imageFile);
+
+      if (selectedVoucherId) {
+        await attachCourses({ discountId: selectedVoucherId, courseIds: [savedCourseId] });
+      }
 
       toast({
         title: `${isEdit ? "Updated" : "Created"} successfully`,
@@ -353,6 +411,21 @@ export default function CreateCourse() {
               <div>
                 <Label htmlFor="promotionPrice">Promotion Price ($)</Label>
                 <Input id="promotionPrice" type="number" placeholder="79.99" step="0.01" value={promotionPrice} onChange={(e) => setPromotionPrice(parseFloat(e.target.value))} />
+              </div>
+              <div>
+                <Label htmlFor="voucher">Apply Voucher (Optional)</Label>
+                <Select value={selectedVoucherId?.toString() || ''} onValueChange={(v) => setSelectedVoucherId(v ? parseInt(v) : null)}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select active voucher" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {vouchers.map((opt) => (
+                      <SelectItem key={opt.value} value={opt.value}>
+                        {opt.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               <div>
                 <Label htmlFor="image">Course Image</Label>

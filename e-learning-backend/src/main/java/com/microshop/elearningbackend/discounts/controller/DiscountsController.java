@@ -25,7 +25,7 @@ public class DiscountsController {
         return ApiResponse.ok(service.save(req));
     }
 
-    @PreAuthorize("hasAuthority('ROLE_Admin')")
+    @PreAuthorize("hasAnyAuthority('ROLE_Admin', 'ROLE_GiangVien')")
     @GetMapping("/list")
     public ApiResponse<ApiPage<DiscountDto>> list(@RequestParam(required = false) String q,
                                                   @RequestParam(required = false) Boolean activeOnly,
@@ -34,7 +34,7 @@ public class DiscountsController {
         return ApiResponse.ok(service.list(q, activeOnly, page, size));
     }
 
-    @PreAuthorize("hasAuthority('ROLE_Admin')")
+    @PreAuthorize("hasAnyAuthority('ROLE_Admin', 'ROLE_GiangVien')")
     @PostMapping("/attach-courses")
     public ApiResponse<Void> attach(@RequestBody AttachCoursesRequest req) {
         service.attachCourses(req);
