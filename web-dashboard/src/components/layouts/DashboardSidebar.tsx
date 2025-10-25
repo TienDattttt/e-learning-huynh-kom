@@ -1,4 +1,4 @@
-import { NavLink, useLocation } from "react-router-dom";
+import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard,
   FolderTree,
@@ -8,6 +8,7 @@ import {
   BookOpen,
   MessageSquare,
   GraduationCap,
+  LogOut,
 } from "lucide-react";
 import {
   Sidebar,
@@ -44,6 +45,7 @@ const instructorItems = [
 export function DashboardSidebar({ role }: DashboardSidebarProps) {
   const { state } = useSidebar();
   const location = useLocation();
+  const navigate = useNavigate();
   const items = role === "admin" ? adminItems : instructorItems;
 
   const getNavClass = (url: string) => {
@@ -53,6 +55,11 @@ export function DashboardSidebar({ role }: DashboardSidebarProps) {
       : "hover:bg-sidebar-accent/50";
   };
 
+  const handleLogout = () => {
+    localStorage.removeItem('accessToken');
+    navigate('/login');
+  };
+
   return (
     <Sidebar collapsible="icon">
       <SidebarContent>
@@ -60,7 +67,7 @@ export function DashboardSidebar({ role }: DashboardSidebarProps) {
           <div className="flex items-center gap-2">
             <GraduationCap className="h-8 w-8 text-sidebar-primary" />
             {state !== "collapsed" && (
-              <span className="text-xl font-bold text-sidebar-foreground">
+              <span className="text-xl text-sidebar-foreground font-bold">
                 LMS {role === "admin" ? "Admin" : "Instructor"}
               </span>
             )}
@@ -81,6 +88,19 @@ export function DashboardSidebar({ role }: DashboardSidebarProps) {
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        <SidebarGroup className="mt-auto">
+          <SidebarGroupContent>
+            <SidebarMenu>
+              <SidebarMenuItem>
+                <SidebarMenuButton onClick={handleLogout}>
+                  <LogOut className="h-5 w-5" />
+                  <span>Logout</span>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
