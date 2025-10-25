@@ -1,6 +1,12 @@
 package com.microshop.elearningbackend.courses.service;
 import com.microshop.elearningbackend.auth.service.CurrentUserService;
 
+import com.cloudinary.Cloudinary;
+import com.cloudinary.utils.ObjectUtils;
+import org.springframework.web.multipart.MultipartFile;
+import java.io.IOException;
+import java.util.Map;
+
 import com.microshop.elearningbackend.categories.repository.CourseCategoryRepository;
 import com.microshop.elearningbackend.common.exception.ApiException;
 import com.microshop.elearningbackend.courses.dto.*;
@@ -35,6 +41,7 @@ public class CourseService {
     private final UserRepository userRepo;
     private final CurrentUserService current;
     private final LearningProgressRepository learningProgressRepo;
+    private final Cloudinary cloudinary;
 
 
     /* =========================
@@ -390,7 +397,7 @@ public class CourseService {
     }
 
     @Transactional
-    public Integer saveFullCourse(SaveFullCourseRequest req) {
+    public Integer saveFullCourse(SaveFullCourseRequest req, MultipartFile imageFile) {
         User teacher = current.getCurrentUser()
                 .orElseThrow(() -> new ApiException("UNAUTHORIZED"));
         ensureTeacherRole(teacher);
@@ -410,6 +417,12 @@ public class CourseService {
 
         Cours course = requireCourse(courseId);
         ensureOwner(course, teacher.getId());  // Extra check
+
+        if (imageFile != null && !imageFile.isEmpty()) {
+            String imageUrl = uploadCourseImage(imageFile);  // Gọi method upload
+            course.setImage(imageUrl);  // Update entity với URL mới
+            courseRepo.save(course);  // Save lại để update image
+        }
 
         // Save chapters and lessons
         if (req.chapters() != null) {
@@ -446,6 +459,31 @@ public class CourseService {
             publishCourse(courseId, true);
         }
 
+
+
         return courseId;
+    }
+
+    public String uploadCourseImage(MultipartFile file) {
+        if (file == null || file.isEmpty()) {
+            throw new ApiException("No image file provided");
+        }
+        try {
+            // Validate: Chỉ image, size < 5MB
+            String contentType = file.getContentType();
+            if (contentType == null || !contentType.startsWith("image/")) {
+                throw new ApiException("File must be an image");
+            }
+            if (file.getSize() > 5 * 1024 * 1024) {  // 5MB limit
+                throw new ApiException("Image size exceeds 5MB");
+            }
+
+            // Upload to Cloudinary (folder 'courses' để tổ chức)
+            Map uploadResult = cloudinary.uploader().upload(file.getBytes(),
+                    ObjectUtils.asMap("folder", "courses", "resource_type", "image"));
+            return (String) uploadResult.get("secure_url");  // Trả URL HTTPS
+        } catch (IOException e) {
+            throw new ApiException("Image upload failed: " + e.getMessage());
+        }
     }
 }

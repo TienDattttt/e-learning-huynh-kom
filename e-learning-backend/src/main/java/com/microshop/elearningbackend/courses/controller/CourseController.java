@@ -8,6 +8,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @RequestMapping("/api/courses")
@@ -101,8 +102,11 @@ public class CourseController {
     }
 
     @PreAuthorize("hasAuthority('ROLE_GiangVien')")
-    @PostMapping("/full-save")
-    public ApiResponse<Integer> fullSave(@RequestBody SaveFullCourseRequest req) {
-        return ApiResponse.ok(service.saveFullCourse(req));
+    @PostMapping(value = "/full-save", consumes = {"multipart/form-data"})  // Thêm consumes multipart
+    public ApiResponse<Integer> fullSave(
+            @RequestPart("courseData") SaveFullCourseRequest req,  // Phần JSON
+            @RequestPart(value = "imageFile", required = false) MultipartFile imageFile  // Phần file optional
+    ) {
+        return ApiResponse.ok(service.saveFullCourse(req, imageFile));  // Gọi service với file
     }
 }

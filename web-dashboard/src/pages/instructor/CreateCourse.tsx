@@ -17,7 +17,9 @@ import { Plus, Trash2 } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate, useParams } from "react-router-dom";
-import { saveFullCourse, getCourseDetail, deleteChapter, deleteLesson } from "@/api/courseApi"; // Adjust path, removed unused imports
+import { saveFullCourse, getCourseDetail, deleteChapter, deleteLesson, getCategories } from "@/api/courseApi";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Loader2 } from "lucide-react";
 
 interface Lesson {
   localId: number;
@@ -37,22 +39,65 @@ interface Chapter {
   lessons: Lesson[];
 }
 
+interface CategoryNode {
+  id: number;
+  name: string;
+  sortOrder: number;
+  status: boolean;
+  parentId: number | null;
+  children: CategoryNode[];
+}
+
+interface CategoryOption {
+  value: string;
+  label: string;
+}
+
+const flattenCategories = (nodes: CategoryNode[], prefix: string = ''): CategoryOption[] => {
+  let options: CategoryOption[] = [];
+  for (let node of nodes) {
+    options.push({ value: node.id.toString(), label: `${prefix}${node.name}` });
+    if (node.children.length > 0) {
+      options = options.concat(flattenCategories(node.children, prefix + '— '));
+    }
+  }
+  return options;
+};
+
 export default function CreateCourse() {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [content, setContent] = useState("");
   const [image, setImage] = useState("");
+  const [imageFile, setImageFile] = useState<File | null>(null);
   const [price, setPrice] = useState(0);
   const [promotionPrice, setPromotionPrice] = useState(0);
   const [categoryId, setCategoryId] = useState<number | null>(null);
   const [publish, setPublish] = useState(false);
   const [chapters, setChapters] = useState<Chapter[]>([]);
+  const [categories, setCategories] = useState<CategoryOption[]>([]);
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
   const { courseId } = useParams<{ courseId?: string }>();
 
   const isEdit = !!courseId;
+
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const data = await getCategories();
+        setCategories(flattenCategories(data));
+      } catch (error) {
+        toast({
+          title: "Error loading categories",
+          description: "Could not fetch categories.",
+          variant: "destructive",
+        });
+      }
+    };
+    fetchCategories();
+  }, [toast]);
 
   useEffect(() => {
     if (isEdit) {
@@ -71,12 +116,12 @@ export default function CreateCourse() {
           setChapters(
             data.chapters.map((ch: any, chIndex: number) => ({
               localId: Date.now() + chIndex,
-              chapterId: ch.chapterId,
+              chapterId: ch.id,
               title: ch.nameChapter,
               orderChapter: ch.orderChapter,
               lessons: ch.lessons.map((ls: any, lsIndex: number) => ({
                 localId: Date.now() + chIndex + lsIndex,
-                lessonId: ls.lessonId,
+                lessonId: ls.id,
                 title: ls.name,
                 videoPath: ls.videoPath,
                 slidePath: ls.slidePath,
@@ -226,7 +271,8 @@ export default function CreateCourse() {
           })),
         })),
       };
-      await saveFullCourse(fullReq);
+
+      await saveFullCourse(fullReq, imageFile);
 
       toast({
         title: `${isEdit ? "Updated" : "Created"} successfully`,
@@ -243,10 +289,6 @@ export default function CreateCourse() {
       setLoading(false);
     }
   };
-
-  if (loading) {
-    return <div>Loading...</div>;
-  }
 
   return (
     <DashboardLayout role="instructor">
@@ -290,15 +332,16 @@ export default function CreateCourse() {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="category">Category *</Label>
-                  <Select value={categoryId?.toString()} onValueChange={(v) => setCategoryId(parseInt(v))} required>
+                  <Select value={categoryId?.toString() || ''} onValueChange={(v) => setCategoryId(v ? parseInt(v) : null)} required>
                     <SelectTrigger>
                       <SelectValue placeholder="Select category" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="1">Programming</SelectItem>
-                      <SelectItem value="2">Design</SelectItem>
-                      <SelectItem value="3">Business</SelectItem>
-                      <SelectItem value="4">Marketing</SelectItem>
+                      {categories.map((opt) => (
+                        <SelectItem key={opt.value} value={opt.value}>
+                          {opt.label}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>
@@ -312,8 +355,19 @@ export default function CreateCourse() {
                 <Input id="promotionPrice" type="number" placeholder="79.99" step="0.01" value={promotionPrice} onChange={(e) => setPromotionPrice(parseFloat(e.target.value))} />
               </div>
               <div>
-                <Label htmlFor="image">Image URL</Label>
-                <Input id="image" placeholder="https://example.com/image.jpg" value={image} onChange={(e) => setImage(e.target.value)} />
+                <Label htmlFor="image">Course Image</Label>
+                {image && (
+                  <div className="mb-2">
+                    <img src={image} alt="Current course image" className="w-48 h-32 object-cover rounded" />
+                  </div>
+                )}
+                <Input
+                  id="imageFile"
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => setImageFile(e.target.files?.[0] || null)}
+                />
+                <p className="text-sm text-muted-foreground mt-1">Upload a new image to replace the current one (max 5MB).</p>
               </div>
               <div className="flex items-center space-x-2">
                 <Switch id="publish" checked={publish} onCheckedChange={setPublish} />
@@ -419,6 +473,16 @@ export default function CreateCourse() {
           </div>
         </form>
       </div>
+
+      <Dialog open={loading}>
+        <DialogContent className="sm:max-w-md">
+          <div className="flex flex-col items-center justify-center py-8">
+            <Loader2 className="h-8 w-8 animate-spin text-primary mb-4" />
+            <h3 className="text-lg font-semibold">Saving Course...</h3>
+            <p className="text-sm text-muted-foreground mt-2">Please wait while we process your request.</p>
+          </div>
+        </DialogContent>
+      </Dialog>
     </DashboardLayout>
   );
 }

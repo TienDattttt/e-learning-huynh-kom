@@ -1,4 +1,3 @@
-
 import axios from 'axios';
 import { getTeacherId } from './authApi';
 
@@ -75,9 +74,21 @@ export const deleteLesson = async (lessonId) => {
   return response.data;
 };
 
-export const saveFullCourse = async (req) => {
-  const response = await axios.post(`${API_BASE_URL}/full-save`, req, {
+export const saveFullCourse = async (req, imageFile = null) => {
+  const formData = new FormData();
+  formData.append('courseData', new Blob([JSON.stringify(req)], { type: 'application/json' }));
+  if (imageFile) {
+    formData.append('imageFile', imageFile);
+  }
+  const response = await axios.post(`${API_BASE_URL}/full-save`, formData, {
     headers: getAuthHeaders(),
   });
   return response.data.data;  // Assuming ApiResponse<Integer>
+};
+
+export const getCategories = async () => {
+  const response = await axios.get('http://localhost:8080/api/categories/tree', {
+    headers: getAuthHeaders(),
+  });
+  return response.data.data;
 };
