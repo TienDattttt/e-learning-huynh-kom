@@ -7,6 +7,7 @@ import com.microshop.elearningbackend.courses.dto.*;
 import com.microshop.elearningbackend.courses.repository.ChapterRepository;
 import com.microshop.elearningbackend.courses.repository.CourseLessonRepository;
 import com.microshop.elearningbackend.courses.repository.CourseRepository;
+import com.microshop.elearningbackend.learning.repository.LearningProgressRepository;
 import com.microshop.elearningbackend.users.repository.UserRepository;
 import com.microshop.elearningbackend.entity.*;
 import lombok.RequiredArgsConstructor;
@@ -33,6 +34,7 @@ public class CourseService {
     private final CourseCategoryRepository categoryRepo;
     private final UserRepository userRepo;
     private final CurrentUserService current;
+    private final LearningProgressRepository learningProgressRepo;
 
 
     /* =========================
@@ -303,7 +305,10 @@ public class CourseService {
 
     private CourseSummaryDto toSummary(Cours c) {
         Integer categoryId = (c.getCategories() != null) ? c.getCategories().getId() : null;
+        String categoryName = (c.getCategories() != null) ? c.getCategories().getName() : null;
         Integer teacherId = (c.getUsers() != null) ? c.getUsers().getId() : null;
+
+        long studentsCount = learningProgressRepo.countDistinctUsersByCourseId(c.getId());
 
         return new CourseSummaryDto(
                 c.getId(),
@@ -313,9 +318,134 @@ public class CourseService {
                 c.getPrice(),
                 c.getPromotionPrice(),
                 categoryId,
+                categoryName,
                 teacherId,
                 c.getStatus(),
-                c.getDateCreated()
+                c.getDateCreated(),
+                (int) studentsCount
         );
+    }
+
+    public Page<CourseSummaryDto> listTeacherCourses(Integer teacherId, Integer page, Integer size) {
+        int p = page == null || page < 0 ? 0 : page;
+        int s = size == null || size <= 0 || size > 100 ? 20 : size;
+        Pageable pageable = PageRequest.of(p, s, Sort.by(Sort.Direction.DESC, "dateCreated"));
+
+        Specification<Cours> spec = (root, q, cb) -> cb.equal(root.get("users").get("id"), teacherId);
+
+        Page<Cours> pageData = courseRepo.findAll(spec, pageable);
+        return pageData.map(this::toSummary);
+    }
+
+    @Transactional(readOnly = true)
+    public CourseDetailDto getTeacherCourseDetail(Integer courseId) {
+        if (courseId == null) throw new ApiException("courseId is required");
+
+        User teacher = current.getCurrentUser().orElseThrow(() -> new ApiException("UNAUTHORIZED"));
+        ensureTeacherRole(teacher);
+
+        Cours course = requireCourse(courseId);
+        ensureOwner(course, teacher.getId());
+
+        List<Chapter> chapters = loadChapters(courseId);
+        Map<Integer, List<CourseLesson>> lessonsByChapter = loadLessonsGroupByChapter(chapters);
+
+        return toCourseDetail(course, chapters, lessonsByChapter);
+    }
+
+    @Transactional
+    public void deleteCourse(Integer id) {
+        User teacher = current.getCurrentUser().orElseThrow(() -> new ApiException("UNAUTHORIZED"));
+        ensureTeacherRole(teacher);
+
+        Cours course = requireCourse(id);
+        ensureOwner(course, teacher.getId());
+
+        courseRepo.delete(course);
+    }
+
+    @Transactional
+    public void deleteChapter(Integer id) {
+        User teacher = current.getCurrentUser().orElseThrow(() -> new ApiException("UNAUTHORIZED"));
+        ensureTeacherRole(teacher);
+
+        Chapter chapter = requireChapter(id);
+        Cours course = chapter.getCourse();
+        ensureOwner(course, teacher.getId());
+
+        chapterRepo.delete(chapter);
+    }
+
+    @Transactional
+    public void deleteLesson(Integer id) {
+        User teacher = current.getCurrentUser().orElseThrow(() -> new ApiException("UNAUTHORIZED"));
+        ensureTeacherRole(teacher);
+
+        CourseLesson lesson = requireLesson(id);
+        Chapter chapter = lesson.getChapter();
+        Cours course = chapter.getCourse();
+        ensureOwner(course, teacher.getId());
+
+        lessonRepo.delete(lesson);
+    }
+
+    @Transactional
+    public Integer saveFullCourse(SaveFullCourseRequest req) {
+        User teacher = current.getCurrentUser()
+                .orElseThrow(() -> new ApiException("UNAUTHORIZED"));
+        ensureTeacherRole(teacher);
+
+        // Save course (reuse saveCourse logic)
+        SaveCourseRequest courseReq = new SaveCourseRequest(
+                req.courseId(),
+                req.name(),
+                req.description(),
+                req.image(),
+                req.content(),
+                req.price(),
+                req.promotionPrice(),
+                req.categoryId()
+        );
+        Integer courseId = saveCourse(courseReq);  // This sets owner if new
+
+        Cours course = requireCourse(courseId);
+        ensureOwner(course, teacher.getId());  // Extra check
+
+        // Save chapters and lessons
+        if (req.chapters() != null) {
+            for (int chIdx = 0; chIdx < req.chapters().size(); chIdx++) {
+                ChapterRequest chReq = req.chapters().get(chIdx);
+                SaveChapterRequest saveChReq = new SaveChapterRequest(
+                        chReq.chapterId(),
+                        courseId,
+                        chReq.nameChapter(),
+                        chIdx + 1  // Auto-set order if needed
+                );
+                Integer chapterId = saveChapter(saveChReq);
+
+                if (chReq.lessons() != null) {
+                    for (int lsIdx = 0; lsIdx < chReq.lessons().size(); lsIdx++) {
+                        LessonRequest lsReq = chReq.lessons().get(lsIdx);
+                        SaveLessonRequest saveLsReq = new SaveLessonRequest(
+                                lsReq.courseLessonId(),
+                                chapterId,
+                                lsReq.name(),
+                                lsReq.videoPath(),
+                                lsReq.slidePath(),
+                                lsReq.typeDocument(),
+                                lsIdx + 1  // Auto-set order
+                        );
+                        saveLesson(saveLsReq);
+                    }
+                }
+            }
+        }
+
+        // Publish if requested
+        if (Boolean.TRUE.equals(req.publish())) {
+            publishCourse(courseId, true);
+        }
+
+        return courseId;
     }
 }

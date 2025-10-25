@@ -1,4 +1,5 @@
-import { useState } from "react";
+// Updated CreateCourse.jsx
+import { useState, useEffect } from "react";
 import { DashboardLayout } from "@/components/layouts/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,47 +13,130 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Plus, Trash2, Upload } from "lucide-react";
+import { Plus, Trash2 } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
+import { saveFullCourse, getCourseDetail, deleteChapter, deleteLesson } from "@/api/courseApi"; // Adjust path, removed unused imports
 
 interface Lesson {
-  id: number;
+  localId: number;
+  lessonId: number | null;
   title: string;
-  videoUrl: string;
+  videoPath: string;
+  slidePath: string;
+  typeDocument: string;
+  sortOrder: number;
 }
 
 interface Chapter {
-  id: number;
+  localId: number;
+  chapterId: number | null;
   title: string;
+  orderChapter: number;
   lessons: Lesson[];
 }
 
 export default function CreateCourse() {
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [content, setContent] = useState("");
+  const [image, setImage] = useState("");
+  const [price, setPrice] = useState(0);
+  const [promotionPrice, setPromotionPrice] = useState(0);
+  const [categoryId, setCategoryId] = useState<number | null>(null);
+  const [publish, setPublish] = useState(false);
   const [chapters, setChapters] = useState<Chapter[]>([]);
+  const [loading, setLoading] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
+  const { courseId } = useParams<{ courseId?: string }>();
+
+  const isEdit = !!courseId;
+
+  useEffect(() => {
+    if (isEdit) {
+      const fetchData = async () => {
+        try {
+          setLoading(true);
+          const data = await getCourseDetail(parseInt(courseId!));
+          setTitle(data.name || "");
+          setDescription(data.description || "");
+          setContent(data.content || "");
+          setImage(data.image || "");
+          setPrice(data.price || 0);
+          setPromotionPrice(data.promotionPrice || 0);
+          setCategoryId(data.categoryId);
+          setPublish(!!data.status);
+          setChapters(
+            data.chapters.map((ch: any, chIndex: number) => ({
+              localId: Date.now() + chIndex,
+              chapterId: ch.chapterId,
+              title: ch.nameChapter,
+              orderChapter: ch.orderChapter,
+              lessons: ch.lessons.map((ls: any, lsIndex: number) => ({
+                localId: Date.now() + chIndex + lsIndex,
+                lessonId: ls.lessonId,
+                title: ls.name,
+                videoPath: ls.videoPath,
+                slidePath: ls.slidePath,
+                typeDocument: ls.typeDocument || "video",
+                sortOrder: ls.sortOrder,
+              })),
+            }))
+          );
+        } catch (error) {
+          toast({
+            title: "Error loading course",
+            description: "Could not fetch course details.",
+            variant: "destructive",
+          });
+        } finally {
+          setLoading(false);
+        }
+      };
+      fetchData();
+    }
+  }, [courseId, isEdit, toast]);
 
   const addChapter = () => {
     setChapters([
       ...chapters,
       {
-        id: Date.now(),
+        localId: Date.now(),
+        chapterId: null,
         title: "",
+        orderChapter: chapters.length + 1,
         lessons: [],
       },
     ]);
   };
 
-  const addLesson = (chapterId: number) => {
+  const updateChapter = (localId: number, field: string, value: any) => {
+    setChapters(
+      chapters.map((ch) =>
+        ch.localId === localId ? { ...ch, [field]: value } : ch
+      )
+    );
+  };
+
+  const addLesson = (chapterLocalId: number) => {
     setChapters(
       chapters.map((chapter) =>
-        chapter.id === chapterId
+        chapter.localId === chapterLocalId
           ? {
               ...chapter,
               lessons: [
                 ...chapter.lessons,
-                { id: Date.now(), title: "", videoUrl: "" },
+                {
+                  localId: Date.now(),
+                  lessonId: null,
+                  title: "",
+                  videoPath: "",
+                  slidePath: "",
+                  typeDocument: "",
+                  sortOrder: chapter.lessons.length + 1,
+                },
               ],
             }
           : chapter
@@ -60,37 +144,115 @@ export default function CreateCourse() {
     );
   };
 
-  const removeChapter = (chapterId: number) => {
-    setChapters(chapters.filter((c) => c.id !== chapterId));
-  };
-
-  const removeLesson = (chapterId: number, lessonId: number) => {
+  const updateLesson = (chapterLocalId: number, lessonLocalId: number, field: string, value: any) => {
     setChapters(
       chapters.map((chapter) =>
-        chapter.id === chapterId
+        chapter.localId === chapterLocalId
           ? {
               ...chapter,
-              lessons: chapter.lessons.filter((l) => l.id !== lessonId),
+              lessons: chapter.lessons.map((lesson) =>
+                lesson.localId === lessonLocalId ? { ...lesson, [field]: value } : lesson
+              ),
             }
           : chapter
       )
     );
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    toast({
-      title: "Course created successfully",
-      description: "Your course has been published and is now available to students.",
-    });
-    navigate("/instructor/courses");
+  const removeChapter = async (chapterLocalId: number, chapterId: number | null) => {
+    if (chapterId) {
+      try {
+        await deleteChapter(chapterId);
+      } catch (error) {
+        toast({
+          title: "Error deleting chapter",
+          variant: "destructive",
+        });
+        return;
+      }
+    }
+    setChapters(chapters.filter((c) => c.localId !== chapterLocalId));
   };
+
+  const removeLesson = async (chapterLocalId: number, lessonLocalId: number, lessonId: number | null) => {
+    if (lessonId) {
+      try {
+        await deleteLesson(lessonId);
+      } catch (error) {
+        toast({
+          title: "Error deleting lesson",
+          variant: "destructive",
+        });
+        return;
+      }
+    }
+    setChapters(
+      chapters.map((chapter) =>
+        chapter.localId === chapterLocalId
+          ? {
+              ...chapter,
+              lessons: chapter.lessons.filter((l) => l.localId !== lessonLocalId),
+            }
+          : chapter
+      )
+    );
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      setLoading(true);
+      const fullReq = {
+        courseId: isEdit ? parseInt(courseId!) : null,
+        name: title,
+        description,
+        image,
+        content,
+        price,
+        promotionPrice,
+        categoryId,
+        publish,
+        chapters: chapters.map((chapter, chIndex) => ({
+          chapterId: chapter.chapterId,
+          nameChapter: chapter.title,
+          orderChapter: chIndex + 1,
+          lessons: chapter.lessons.map((lesson, lsIndex) => ({
+            courseLessonId: lesson.lessonId,
+            name: lesson.title,
+            videoPath: lesson.videoPath,
+            slidePath: lesson.slidePath,
+            typeDocument: lesson.typeDocument,
+            sortOrder: lsIndex + 1,
+          })),
+        })),
+      };
+      await saveFullCourse(fullReq);
+
+      toast({
+        title: `${isEdit ? "Updated" : "Created"} successfully`,
+        description: "Your course has been saved.",
+      });
+      navigate("/instructor/courses");
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to save the course.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading) {
+    return <div>Loading...</div>;
+  }
 
   return (
     <DashboardLayout role="instructor">
       <div className="max-w-4xl animate-fade-in">
         <div className="mb-6">
-          <h2 className="text-3xl font-bold tracking-tight">Create New Course</h2>
+          <h2 className="text-3xl font-bold tracking-tight">{isEdit ? "Edit Course" : "Create New Course"}</h2>
           <p className="text-muted-foreground">Fill in the course details and curriculum</p>
         </div>
 
@@ -102,7 +264,7 @@ export default function CreateCourse() {
             <CardContent className="space-y-4">
               <div>
                 <Label htmlFor="title">Course Title *</Label>
-                <Input id="title" placeholder="e.g., React Advanced Patterns" required />
+                <Input id="title" placeholder="e.g., React Advanced Patterns" required value={title} onChange={(e) => setTitle(e.target.value)} />
               </div>
               <div>
                 <Label htmlFor="description">Description *</Label>
@@ -111,39 +273,51 @@ export default function CreateCourse() {
                   placeholder="Describe what students will learn..."
                   rows={4}
                   required
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                />
+              </div>
+              <div>
+                <Label htmlFor="content">Content</Label>
+                <Textarea
+                  id="content"
+                  placeholder="Detailed content..."
+                  rows={6}
+                  value={content}
+                  onChange={(e) => setContent(e.target.value)}
                 />
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="category">Category *</Label>
-                  <Select required>
+                  <Select value={categoryId?.toString()} onValueChange={(v) => setCategoryId(parseInt(v))} required>
                     <SelectTrigger>
                       <SelectValue placeholder="Select category" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="programming">Programming</SelectItem>
-                      <SelectItem value="design">Design</SelectItem>
-                      <SelectItem value="business">Business</SelectItem>
-                      <SelectItem value="marketing">Marketing</SelectItem>
+                      <SelectItem value="1">Programming</SelectItem>
+                      <SelectItem value="2">Design</SelectItem>
+                      <SelectItem value="3">Business</SelectItem>
+                      <SelectItem value="4">Marketing</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
                 <div>
                   <Label htmlFor="price">Price ($) *</Label>
-                  <Input id="price" type="number" placeholder="99.99" step="0.01" required />
+                  <Input id="price" type="number" placeholder="99.99" step="0.01" required value={price} onChange={(e) => setPrice(parseFloat(e.target.value))} />
                 </div>
               </div>
               <div>
-                <Label htmlFor="thumbnail">Course Thumbnail</Label>
-                <div className="mt-2 flex items-center gap-4">
-                  <Button type="button" variant="outline">
-                    <Upload className="mr-2 h-4 w-4" />
-                    Upload Image
-                  </Button>
-                  <span className="text-sm text-muted-foreground">
-                    Recommended: 1280x720px, max 5MB
-                  </span>
-                </div>
+                <Label htmlFor="promotionPrice">Promotion Price ($)</Label>
+                <Input id="promotionPrice" type="number" placeholder="79.99" step="0.01" value={promotionPrice} onChange={(e) => setPromotionPrice(parseFloat(e.target.value))} />
+              </div>
+              <div>
+                <Label htmlFor="image">Image URL</Label>
+                <Input id="image" placeholder="https://example.com/image.jpg" value={image} onChange={(e) => setImage(e.target.value)} />
+              </div>
+              <div className="flex items-center space-x-2">
+                <Switch id="publish" checked={publish} onCheckedChange={setPublish} />
+                <Label htmlFor="publish">Publish Course</Label>
               </div>
             </CardContent>
           </Card>
@@ -163,20 +337,22 @@ export default function CreateCourse() {
                 </div>
               ) : (
                 chapters.map((chapter, chapterIndex) => (
-                  <div key={chapter.id} className="p-4 border rounded-lg space-y-4">
+                  <div key={chapter.localId} className="p-4 border rounded-lg space-y-4">
                     <div className="flex items-start gap-4">
                       <div className="flex-1">
                         <Label>Chapter {chapterIndex + 1} Title</Label>
                         <Input
                           placeholder="e.g., Introduction to React Hooks"
                           className="mt-2"
+                          value={chapter.title}
+                          onChange={(e) => updateChapter(chapter.localId, "title", e.target.value)}
                         />
                       </div>
                       <Button
                         type="button"
                         variant="ghost"
                         size="icon"
-                        onClick={() => removeChapter(chapter.id)}
+                        onClick={() => removeChapter(chapter.localId, chapter.chapterId)}
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
@@ -184,27 +360,34 @@ export default function CreateCourse() {
 
                     <div className="pl-4 space-y-3">
                       {chapter.lessons.map((lesson, lessonIndex) => (
-                        <div key={lesson.id} className="flex items-center gap-2">
-                          <div className="flex-1 grid grid-cols-2 gap-2">
+                        <div key={lesson.localId} className="flex items-center gap-2">
+                          <div className="flex-1 grid grid-cols-4 gap-2">
                             <Input
                               placeholder={`Lesson ${lessonIndex + 1} title`}
+                              value={lesson.title}
+                              onChange={(e) => updateLesson(chapter.localId, lesson.localId, "title", e.target.value)}
                             />
-                            <div className="flex gap-2">
-                              <Input placeholder="Video URL" />
-                              <Button
-                                type="button"
-                                variant="outline"
-                                size="sm"
-                              >
-                                <Upload className="h-4 w-4" />
-                              </Button>
-                            </div>
+                            <Input
+                              placeholder="Video URL"
+                              value={lesson.videoPath}
+                              onChange={(e) => updateLesson(chapter.localId, lesson.localId, "videoPath", e.target.value)}
+                            />
+                            <Input
+                              placeholder="Slide URL"
+                              value={lesson.slidePath}
+                              onChange={(e) => updateLesson(chapter.localId, lesson.localId, "slidePath", e.target.value)}
+                            />
+                            <Input
+                              placeholder="Type (e.g., video)"
+                              value={lesson.typeDocument}
+                              onChange={(e) => updateLesson(chapter.localId, lesson.localId, "typeDocument", e.target.value)}
+                            />
                           </div>
                           <Button
                             type="button"
                             variant="ghost"
                             size="icon"
-                            onClick={() => removeLesson(chapter.id, lesson.id)}
+                            onClick={() => removeLesson(chapter.localId, lesson.localId, lesson.lessonId)}
                           >
                             <Trash2 className="h-4 w-4" />
                           </Button>
@@ -214,7 +397,7 @@ export default function CreateCourse() {
                         type="button"
                         variant="outline"
                         size="sm"
-                        onClick={() => addLesson(chapter.id)}
+                        onClick={() => addLesson(chapter.localId)}
                       >
                         <Plus className="mr-2 h-4 w-4" />
                         Add Lesson
@@ -230,7 +413,9 @@ export default function CreateCourse() {
             <Button type="button" variant="outline" onClick={() => navigate("/instructor/courses")}>
               Cancel
             </Button>
-            <Button type="submit">Publish Course</Button>
+            <Button type="submit" disabled={loading}>
+              {isEdit ? "Update" : "Create"} Course {publish && "and Publish"}
+            </Button>
           </div>
         </form>
       </div>

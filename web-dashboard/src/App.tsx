@@ -1,3 +1,4 @@
+// Updated App.jsx (add the edit route)
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -50,7 +51,7 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/login" element={<Login />} />
-            <Route path="/register"element={<Register />} />
+            <Route path="/register" element={<Register />} />
             
             {/* Admin Routes - Protected */}
             <Route path="/admin" element={<RequireAuth allowedRole="ADMIN"><AdminDashboard /></RequireAuth>} />
@@ -63,6 +64,7 @@ const App = () => (
             <Route path="/instructor" element={<RequireAuth allowedRole="GIANGVIEN"><InstructorDashboard /></RequireAuth>} />
             <Route path="/instructor/courses" element={<RequireAuth allowedRole="GIANGVIEN"><Courses /></RequireAuth>} />
             <Route path="/instructor/courses/create" element={<RequireAuth allowedRole="GIANGVIEN"><CreateCourse /></RequireAuth>} />
+            <Route path="/instructor/courses/:courseId/edit" element={<RequireAuth allowedRole="GIANGVIEN"><CreateCourse /></RequireAuth>} />
             <Route path="/instructor/students" element={<RequireAuth allowedRole="GIANGVIEN"><InstructorStudents /></RequireAuth>} />
             <Route path="/instructor/qa" element={<RequireAuth allowedRole="GIANGVIEN"><QA /></RequireAuth>} />
             <Route path="/instructor/revenue" element={<RequireAuth allowedRole="GIANGVIEN"><InstructorRevenue /></RequireAuth>} />

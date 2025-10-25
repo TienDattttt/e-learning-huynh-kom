@@ -1,4 +1,5 @@
-import { useState } from "react";
+// Updated Courses.jsx
+import { useState, useEffect } from "react";
 import { DashboardLayout } from "@/components/layouts/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -14,59 +15,58 @@ import { Badge } from "@/components/ui/badge";
 import { Plus, Edit, Trash2, Eye } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
+import { getMyCourses, deleteCourse } from "@/api/courseApi"; // Adjust path
 
 interface Course {
-  id: number;
-  title: string;
-  category: string;
+  courseId: number;
+  name: string;
+  categoryName: string; // Changed to match updated DTO
   price: number;
-  students: number;
-  status: "published" | "draft";
-  rating: number;
+  students: number; // Mocked as 0 since not in DTO
+  status: boolean;
 }
 
-const mockCourses: Course[] = [
-  {
-    id: 1,
-    title: "React Advanced Patterns",
-    category: "Programming",
-    price: 99.99,
-    students: 342,
-    status: "published",
-    rating: 4.8,
-  },
-  {
-    id: 2,
-    title: "JavaScript Fundamentals",
-    category: "Programming",
-    price: 49.99,
-    students: 289,
-    status: "published",
-    rating: 4.6,
-  },
-  {
-    id: 3,
-    title: "TypeScript Masterclass",
-    category: "Programming",
-    price: 79.99,
-    students: 216,
-    status: "draft",
-    rating: 0,
-  },
-];
-
 export default function Courses() {
-  const [courses, setCourses] = useState<Course[]>(mockCourses);
+  const [courses, setCourses] = useState<Course[]>([]);
+  const [loading, setLoading] = useState(true);
   const { toast } = useToast();
   const navigate = useNavigate();
 
-  const handleDelete = (id: number) => {
-    setCourses(courses.filter((c) => c.id !== id));
-    toast({
-      title: "Course deleted",
-      description: "The course has been removed.",
-      variant: "destructive",
-    });
+  useEffect(() => {
+    const fetchCourses = async () => {
+      try {
+        setLoading(true);
+        const data = await getMyCourses();
+        setCourses(data.content || []); // Assuming Page response
+      } catch (error) {
+        toast({
+          title: "Error loading courses",
+          description: "Could not fetch your courses.",
+          variant: "destructive",
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchCourses();
+  }, []);
+
+  const handleDelete = async (id: number) => {
+    try {
+      await deleteCourse(id);
+      setCourses(courses.filter((c) => c.courseId !== id));
+      toast({
+        title: "Course deleted",
+        description: "The course has been removed.",
+        variant: "destructive",
+      });
+    } catch (error) {
+      toast({
+        title: "Error deleting course",
+        description: "Could not delete the course.",
+        variant: "destructive",
+      });
+    }
   };
 
   return (
@@ -88,55 +88,48 @@ export default function Courses() {
             <CardTitle>All Courses</CardTitle>
           </CardHeader>
           <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Title</TableHead>
-                  <TableHead>Category</TableHead>
-                  <TableHead>Price</TableHead>
-                  <TableHead>Students</TableHead>
-                  <TableHead>Rating</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {courses.map((course) => (
-                  <TableRow key={course.id}>
-                    <TableCell className="font-medium">{course.title}</TableCell>
-                    <TableCell>{course.category}</TableCell>
-                    <TableCell>${course.price}</TableCell>
-                    <TableCell>{course.students}</TableCell>
-                    <TableCell>
-                      {course.status === "published" ? (
-                        <span className="flex items-center gap-1">
-                          <span className="text-warning">★</span>
-                          {course.rating}
-                        </span>
-                      ) : (
-                        "-"
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant={course.status === "published" ? "default" : "secondary"}>
-                        {course.status}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <Button variant="ghost" size="icon">
-                        <Eye className="h-4 w-4" />
-                      </Button>
-                      <Button variant="ghost" size="icon">
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                      <Button variant="ghost" size="icon" onClick={() => handleDelete(course.id)}>
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </TableCell>
+            {loading ? (
+              <div className="text-center py-4">Loading...</div>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Title</TableHead>
+                    <TableHead>Category</TableHead>
+                    <TableHead>Price</TableHead>
+                    <TableHead>Students</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {courses.map((course) => (
+                    <TableRow key={course.courseId}>
+                      <TableCell className="font-medium">{course.name}</TableCell>
+                      <TableCell>{course.categoryName}</TableCell>
+                      <TableCell>${course.price}</TableCell>
+                      <TableCell>{course.students}</TableCell>
+                      <TableCell>
+                        <Badge variant={course.status ? "default" : "secondary"}>
+                          {course.status ? "published" : "draft"}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <Button variant="ghost" size="icon" onClick={() => navigate(`/instructor/courses/${course.courseId}/edit`)}>
+                          <Eye className="h-4 w-4" />
+                        </Button>
+                        <Button variant="ghost" size="icon" onClick={() => navigate(`/instructor/courses/${course.courseId}/edit`)}>
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button variant="ghost" size="icon" onClick={() => handleDelete(course.courseId)}>
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            )}
           </CardContent>
         </Card>
       </div>

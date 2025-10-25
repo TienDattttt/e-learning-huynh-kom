@@ -44,4 +44,6 @@ public interface LearningProgressRepository extends JpaRepository<LearningProgre
         order by lp.lesson.id asc
     """)
     List<Object[]> findLessonProgress(Integer courseId, Integer userId);
+    @Query("SELECT COUNT(DISTINCT lp.user.id) FROM LearningProgress lp WHERE lp.course.id = :courseId")
+    long countDistinctUsersByCourseId(Integer courseId);
 }

@@ -10,7 +10,9 @@ public record CourseSummaryDto(
         Long price,
         Long promotionPrice,
         Integer categoryId,
+        String categoryName,
         Integer teacherId,
         Boolean status,
-        LocalDateTime dateCreated
+        LocalDateTime dateCreated,
+        Integer students
 ) {}

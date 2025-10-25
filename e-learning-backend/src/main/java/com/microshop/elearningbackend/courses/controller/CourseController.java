@@ -1,5 +1,6 @@
 package com.microshop.elearningbackend.courses.controller;
 
+import com.microshop.elearningbackend.auth.service.CurrentUserService;
 import com.microshop.elearningbackend.common.ApiResponse;
 import com.microshop.elearningbackend.courses.dto.*;
 import com.microshop.elearningbackend.courses.service.CourseService;
@@ -14,6 +15,7 @@ import org.springframework.web.bind.annotation.*;
 public class CourseController {
 
     private final CourseService service;
+    private final CurrentUserService current;
 
     // Giảng viên tạo/cập nhật khóa học (owner lấy từ JWT)
     @PreAuthorize("hasAuthority('ROLE_GiangVien')")
@@ -59,5 +61,48 @@ public class CourseController {
     @GetMapping("/public/detail")
     public ApiResponse<CourseDetailDto> getPublicDetail(@RequestParam Integer courseId) {
         return ApiResponse.ok(service.getPublicCourseDetail(courseId));
+    }
+
+    @PreAuthorize("hasAuthority('ROLE_GiangVien')")
+    @GetMapping("/teacher/list")
+    public ApiResponse<Page<CourseSummaryDto>> listTeacherCourses(
+            @RequestParam(required = false) Integer page,
+            @RequestParam(required = false) Integer size
+    ) {
+        Integer teacherId = current.requireCurrentUserId();
+        return ApiResponse.ok(service.listTeacherCourses(teacherId, page, size));
+    }
+
+    @PreAuthorize("hasAuthority('ROLE_GiangVien')")
+    @GetMapping("/teacher/detail")
+    public ApiResponse<CourseDetailDto> getTeacherDetail(@RequestParam Integer courseId) {
+        return ApiResponse.ok(service.getTeacherCourseDetail(courseId));
+    }
+
+    @PreAuthorize("hasAuthority('ROLE_GiangVien')")
+    @DeleteMapping("/{id}")
+    public ApiResponse<Void> deleteCourse(@PathVariable Integer id) {
+        service.deleteCourse(id);
+        return ApiResponse.ok(null);
+    }
+
+    @PreAuthorize("hasAuthority('ROLE_GiangVien')")
+    @DeleteMapping("/chapters/{id}")
+    public ApiResponse<Void> deleteChapter(@PathVariable Integer id) {
+        service.deleteChapter(id);
+        return ApiResponse.ok(null);
+    }
+
+    @PreAuthorize("hasAuthority('ROLE_GiangVien')")
+    @DeleteMapping("/lessons/{id}")
+    public ApiResponse<Void> deleteLesson(@PathVariable Integer id) {
+        service.deleteLesson(id);
+        return ApiResponse.ok(null);
+    }
+
+    @PreAuthorize("hasAuthority('ROLE_GiangVien')")
+    @PostMapping("/full-save")
+    public ApiResponse<Integer> fullSave(@RequestBody SaveFullCourseRequest req) {
+        return ApiResponse.ok(service.saveFullCourse(req));
     }
 }
