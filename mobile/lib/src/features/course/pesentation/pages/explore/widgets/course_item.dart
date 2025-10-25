@@ -6,6 +6,8 @@ import 'package:online_course/src/features/course/pesentation/bloc/favorite_cour
 import 'package:online_course/src/theme/app_color.dart';
 import 'package:online_course/src/widgets/custom_image.dart';
 import 'package:online_course/src/widgets/favorite_box_v2.dart';
+import 'package:cloudinary_flutter/image/cld_image.dart';
+import 'package:online_course/core/utils/cloudinary_helper.dart';
 
 class CourseItem extends StatelessWidget {
   const CourseItem(
@@ -101,23 +103,41 @@ class CourseItem extends StatelessWidget {
     return '$sđ';
   }
 
+  //
+  // Widget _buildCourseImage() {
+  //   return Hero(
+  //     tag: '${course.id}${course.image}',
+  //     child: ClipRRect(
+  //       borderRadius: BorderRadius.circular(15),
+  //       child: Image.network(
+  //         course.image,
+  //         width: width,
+  //         height: 190,
+  //         fit: BoxFit.cover,
+  //         errorBuilder: (context, error, stackTrace) => const Icon(Icons.error),
+  //       ),
+  //     ),
+  //   );
+  // }
 
   Widget _buildCourseImage() {
+    String publicId = extractPublicId(course.image);
     return Hero(
       tag: '${course.id}${course.image}',
       child: ClipRRect(
         borderRadius: BorderRadius.circular(15),
-        child: Image.asset(
-          "${course.image}",
+        child: CldImageWidget(
+          publicId: publicId,
+          transformation: getOptimizedTransformation(width: width.toInt(), height: 190),
           width: width,
           height: 190,
           fit: BoxFit.cover,
+          placeholder: (context, url) => const CircularProgressIndicator(),
+          errorBuilder: (context, url, error) => const Icon(Icons.error),
         ),
       ),
     );
   }
-
-
 
   Widget _buildAttribute(IconData icon, Color color, String info) {
     return Row(

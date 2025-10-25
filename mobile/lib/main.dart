@@ -9,10 +9,13 @@ import 'package:online_course/src/features/course/pesentation/bloc/detail/course
 import 'package:online_course/src/features/course/pesentation/bloc/favorite_course/favorite_course_bloc.dart';
 import 'package:online_course/src/root_app.dart';
 import 'src/theme/app_color.dart';
+import 'package:cloudinary_flutter/cloudinary_context.dart';
+import 'package:online_course/core/utils/cloudinary_helper.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await initLocator();
+  CloudinaryContext.cloudinary = cld;
   runApp(const MyApp());
 }
 

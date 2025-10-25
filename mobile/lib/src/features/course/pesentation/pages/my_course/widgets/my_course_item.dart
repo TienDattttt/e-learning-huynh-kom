@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:online_course/src/features/course/domain/entities/my_course.dart';
 import 'package:online_course/src/theme/app_color.dart';
 import 'package:online_course/src/widgets/custom_image.dart';
+import 'package:cloudinary_flutter/image/cld_image.dart';
+import 'package:online_course/core/utils/cloudinary_helper.dart';
 
 class MyCourseItem extends StatelessWidget {
   const MyCourseItem({
@@ -37,11 +39,14 @@ class MyCourseItem extends StatelessWidget {
           children: [
             ClipRRect(
               borderRadius: BorderRadius.circular(10),
-              child: Image.asset(
-                data.image,
+              child: CldImageWidget(
+                publicId: extractPublicId(data.image),
+                transformation: getOptimizedTransformation(width: 70, height: 70),
                 width: 70,
                 height: 70,
                 fit: BoxFit.cover,
+                placeholder: (context, url) => const CircularProgressIndicator(),
+                errorBuilder: (context, url, error) => const Icon(Icons.error),
               ),
             ),
             const SizedBox(width: 10),
@@ -49,11 +54,9 @@ class MyCourseItem extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(data.name,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                          fontSize: 15, fontWeight: FontWeight.w500)),
+                  Text(data.name, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w500)),
                   const SizedBox(height: 6),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -61,8 +64,7 @@ class MyCourseItem extends StatelessWidget {
                       Text(data.completedLabel, style: TextStyle(color: progressColor)),
                       Visibility(
                         visible: data.progress < 100,
-                        child: Text(data.progressLabel,
-                            style: const TextStyle(fontSize: 12, color: AppColor.labelColor)),
+                        child: Text(data.progressLabel, style: const TextStyle(fontSize: 12, color: AppColor.labelColor)),
                       ),
                     ],
                   ),

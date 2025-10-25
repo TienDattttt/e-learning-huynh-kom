@@ -5,6 +5,11 @@ class AuthInterceptor extends Interceptor {
   @override
   void onRequest(
       RequestOptions options, RequestInterceptorHandler handler) async {
+    // Skip thêm token cho endpoint public (login/register)
+    if (options.path.contains('/auth/login') ||
+        options.path.contains('/auth/register')) {
+      return handler.next(options);  // Không thêm header, tiếp tục request
+    }
 
     final token = await TokenStorage.getToken();
 
@@ -17,9 +22,10 @@ class AuthInterceptor extends Interceptor {
 
   @override
   void onError(DioException err, ErrorInterceptorHandler handler) {
-    // Nếu Backend trả 401 = token hết hạn → sau này có thể Refresh Token
     if (err.response?.statusCode == 401) {
-      // TODO: xử lý refresh token sau này
+      // Xóa token expired để tránh lặp lỗi
+      TokenStorage.clear();  // Giả sử TokenStorage có method clearToken(), nếu không thì thêm (xem dưới)
+      // TODO: Xử lý refresh token sau này nếu backend hỗ trợ
     }
     return handler.next(err);
   }
