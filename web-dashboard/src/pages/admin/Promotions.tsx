@@ -1,4 +1,5 @@
-import { useState } from "react";
+// src/pages/admin/Promotions.tsx
+import { useEffect, useState } from "react";
 import { DashboardLayout } from "@/components/layouts/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -17,8 +18,17 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { Plus, Edit, Trash2 } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
@@ -27,63 +37,153 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Edit, Trash2 } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
+import { useForm } from "react-hook-form";
+import * as z from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { getDiscountList, saveDiscount, disableDiscount, DiscountDto, SaveDiscountRequest } from "@/api/discountApi";
 
 interface Voucher {
   id: number;
   code: string;
   discountType: "percentage" | "fixed";
   value: number;
-  startDate: string;
-  endDate: string;
+  startDate: string | null;
+  endDate: string | null;
   status: "active" | "expired";
-  usedCount: number;
 }
 
-const mockVouchers: Voucher[] = [
-  {
-    id: 1,
-    code: "SUMMER2024",
-    discountType: "percentage",
-    value: 20,
-    startDate: "2024-06-01",
-    endDate: "2024-08-31",
-    status: "active",
-    usedCount: 145,
-  },
-  {
-    id: 2,
-    code: "NEWYEAR50",
-    discountType: "fixed",
-    value: 50,
-    startDate: "2024-01-01",
-    endDate: "2024-01-31",
-    status: "expired",
-    usedCount: 89,
-  },
-];
+const formSchema = z.object({
+  code: z.string().min(1, { message: "Voucher code is required" }),
+  discountType: z.enum(["percentage", "fixed"]),
+  value: z.number().min(1, { message: "Discount value must be at least 1" }),
+  startDate: z.string().optional(),
+  endDate: z.string().optional(),
+});
 
 export default function Promotions() {
-  const [vouchers, setVouchers] = useState<Voucher[]>(mockVouchers);
+  const [vouchers, setVouchers] = useState<Voucher[]>([]);
   const [isOpen, setIsOpen] = useState(false);
+  const [currentVoucher, setCurrentVoucher] = useState<Voucher | null>(null);
   const { toast } = useToast();
 
-  const handleAddVoucher = () => {
-    toast({
-      title: "Voucher created",
-      description: "The voucher has been successfully created.",
-    });
-    setIsOpen(false);
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      code: "",
+      discountType: "percentage",
+      value: 0,
+      startDate: "",
+      endDate: "",
+    },
+  });
+
+  const formatDate = (dateStr: string | null) => {
+    if (!dateStr) return "N/A";
+    const [year, month, day] = dateStr.split('-');
+    return `${day}/${month}/${year}`;
   };
 
-  const handleDelete = (id: number) => {
-    setVouchers(vouchers.filter((v) => v.id !== id));
-    toast({
-      title: "Voucher deleted",
-      description: "The voucher has been removed.",
-      variant: "destructive",
-    });
+  const fetchVouchers = async () => {
+    try {
+      const data = await getDiscountList();
+      const mapped: Voucher[] = data.map((d: DiscountDto) => ({
+        id: d.discountId,
+        code: d.code,
+        discountType: d.percent ? "percentage" : "fixed",
+        value: d.percent || d.amount || 0,
+        startDate: d.fromDate ? d.fromDate.split('T')[0] : null,
+        endDate: d.toDate ? d.toDate.split('T')[0] : null,
+        status: d.active ? "active" : "expired",
+      }));
+      setVouchers(mapped);
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to load vouchers.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  useEffect(() => {
+    fetchVouchers();
+  }, []);
+
+  useEffect(() => {
+    if (currentVoucher) {
+      form.reset({
+        code: currentVoucher.code,
+        discountType: currentVoucher.discountType,
+        value: currentVoucher.value,
+        startDate: currentVoucher.startDate ?? "",
+        endDate: currentVoucher.endDate ?? "",
+      });
+    } else {
+      form.reset({
+        code: "",
+        discountType: "percentage",
+        value: 0,
+        startDate: "",
+        endDate: "",
+      });
+    }
+  }, [currentVoucher, form]);
+
+  const onSubmit = async (values: z.infer<typeof formSchema>) => {
+    try {
+      const percent = values.discountType === "percentage" ? values.value : null;
+      const amount = values.discountType === "fixed" ? values.value : null;
+      const req: SaveDiscountRequest = {
+        discountId: currentVoucher?.id ?? null,
+        code: values.code,
+        percent,
+        amount,
+        fromDate: values.startDate ? `${values.startDate}T00:00:00` : null,
+        toDate: values.endDate ? `${values.endDate}T23:59:59` : null,
+      };
+      await saveDiscount(req);
+      toast({
+        title: currentVoucher ? "Voucher updated" : "Voucher created",
+        description: "The voucher has been successfully saved.",
+      });
+      setIsOpen(false);
+      setCurrentVoucher(null);
+      fetchVouchers();
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to save voucher.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleDisable = async (id: number) => {
+    try {
+      await disableDiscount(id);
+      toast({
+        title: "Voucher disabled",
+        description: "The voucher has been disabled.",
+        variant: "destructive",
+      });
+      fetchVouchers();
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to disable voucher.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const openAddDialog = () => {
+    setCurrentVoucher(null);
+    setIsOpen(true);
+  };
+
+  const openEditDialog = (voucher: Voucher) => {
+    setCurrentVoucher(voucher);
+    setIsOpen(true);
   };
 
   return (
@@ -96,50 +196,102 @@ export default function Promotions() {
           </div>
           <Dialog open={isOpen} onOpenChange={setIsOpen}>
             <DialogTrigger asChild>
-              <Button>
+              <Button onClick={openAddDialog}>
                 <Plus className="mr-2 h-4 w-4" />
                 Create Voucher
               </Button>
             </DialogTrigger>
             <DialogContent>
               <DialogHeader>
-                <DialogTitle>Create New Voucher</DialogTitle>
+                <DialogTitle>{currentVoucher ? "Edit Voucher" : "Create New Voucher"}</DialogTitle>
               </DialogHeader>
-              <div className="space-y-4">
-                <div>
-                  <Label htmlFor="code">Voucher Code</Label>
-                  <Input id="code" placeholder="e.g., WELCOME2024" />
-                </div>
-                <div>
-                  <Label htmlFor="discountType">Discount Type</Label>
-                  <Select>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select type" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="percentage">Percentage (%)</SelectItem>
-                      <SelectItem value="fixed">Fixed Amount ($)</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <Label htmlFor="value">Discount Value</Label>
-                  <Input id="value" type="number" placeholder="e.g., 20" />
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="startDate">Start Date</Label>
-                    <Input id="startDate" type="date" />
+              <Form {...form}>
+                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                  <FormField
+                    control={form.control}
+                    name="code"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Voucher Code</FormLabel>
+                        <FormControl>
+                          <Input placeholder="e.g., WELCOME2024" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="discountType"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Discount Type</FormLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select type" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="percentage">Percentage (%)</SelectItem>
+                            <SelectItem value="fixed">Fixed Amount ($)</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="value"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Discount Value</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="number"
+                            placeholder="e.g., 20"
+                            {...field}
+                            onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <div className="grid grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="startDate"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Start Date</FormLabel>
+                          <FormControl>
+                            <Input type="date" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="endDate"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>End Date</FormLabel>
+                          <FormControl>
+                            <Input type="date" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
                   </div>
-                  <div>
-                    <Label htmlFor="endDate">End Date</Label>
-                    <Input id="endDate" type="date" />
-                  </div>
-                </div>
-                <Button onClick={handleAddVoucher} className="w-full">
-                  Create Voucher
-                </Button>
-              </div>
+                  <Button type="submit" className="w-full">
+                    {currentVoucher ? "Update Voucher" : "Create Voucher"}
+                  </Button>
+                </form>
+              </Form>
             </DialogContent>
           </Dialog>
         </div>
@@ -157,7 +309,6 @@ export default function Promotions() {
                   <TableHead>Value</TableHead>
                   <TableHead>Valid Period</TableHead>
                   <TableHead>Status</TableHead>
-                  <TableHead>Used</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
@@ -170,22 +321,21 @@ export default function Promotions() {
                       {voucher.discountType === "percentage" ? `${voucher.value}%` : `$${voucher.value}`}
                     </TableCell>
                     <TableCell>
-                      {voucher.startDate} - {voucher.endDate}
+                      {formatDate(voucher.startDate)} - {formatDate(voucher.endDate)}
                     </TableCell>
                     <TableCell>
                       <Badge variant={voucher.status === "active" ? "default" : "secondary"}>
                         {voucher.status}
                       </Badge>
                     </TableCell>
-                    <TableCell>{voucher.usedCount}</TableCell>
                     <TableCell className="text-right">
-                      <Button variant="ghost" size="icon">
+                      <Button variant="ghost" size="icon" onClick={() => openEditDialog(voucher)}>
                         <Edit className="h-4 w-4" />
                       </Button>
                       <Button
                         variant="ghost"
                         size="icon"
-                        onClick={() => handleDelete(voucher.id)}
+                        onClick={() => handleDisable(voucher.id)}
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
