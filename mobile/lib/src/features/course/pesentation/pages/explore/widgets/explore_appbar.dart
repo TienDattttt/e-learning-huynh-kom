@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:online_course/src/features/course/pesentation/bloc/explore/course_bloc.dart';
+import 'package:online_course/src/features/course/pesentation/bloc/explore/course_event.dart';
 import 'package:online_course/src/theme/app_color.dart';
 
 class ExploreAppbar extends StatelessWidget {
@@ -6,23 +9,26 @@ class ExploreAppbar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Row(
+    return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                "Explore",
-                style: TextStyle(
-                  color: AppColor.textColor,
-                  fontSize: 24,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ],
+        const Expanded(
+          child: Text(
+            "Explore",
+            style: TextStyle(
+              color: AppColor.textColor,
+              fontSize: 24,
+              fontWeight: FontWeight.w600,
+            ),
           ),
+        ),
+        // 🟢 Nút refresh
+        IconButton(
+          icon: const Icon(Icons.refresh, color: AppColor.primary, size: 26),
+          tooltip: 'Làm mới danh sách',
+          onPressed: () {
+            context.read<CourseBloc>().add(const LoadCourseEvent());
+          },
         ),
       ],
     );

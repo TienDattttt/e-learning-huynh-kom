@@ -17,7 +17,7 @@ import { Plus, Trash2 } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate, useParams } from "react-router-dom";
-import { saveFullCourse, getCourseDetail, deleteChapter, deleteLesson, getCategories } from "@/api/courseApi";
+import { saveFullCourse, getCourseDetail, deleteChapter, deleteLesson, getCategories,uploadLessonVideo, } from "@/api/courseApi";
 import { getDiscountList, attachCourses, DiscountDto } from "@/api/discountApi";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Loader2 } from "lucide-react";
@@ -410,7 +410,17 @@ export default function CreateCourse() {
               </div>
               <div>
                 <Label htmlFor="promotionPrice">Promotion Price ($)</Label>
-                <Input id="promotionPrice" type="number" placeholder="79.99" step="0.01" value={promotionPrice} onChange={(e) => setPromotionPrice(parseFloat(e.target.value))} />
+                <Input
+  id="promotionPrice"
+  type="number"
+  placeholder="79.99"
+  step="0.01"
+  value={promotionPrice ?? ""}
+  onChange={(e) => {
+    const val = e.target.value;
+    setPromotionPrice(val === "" ? null : parseFloat(val));
+  }}
+/>
               </div>
               <div>
                 <Label htmlFor="voucher">Apply Voucher (Optional)</Label>
@@ -494,11 +504,58 @@ export default function CreateCourse() {
                               value={lesson.title}
                               onChange={(e) => updateLesson(chapter.localId, lesson.localId, "title", e.target.value)}
                             />
-                            <Input
-                              placeholder="Video URL"
-                              value={lesson.videoPath}
-                              onChange={(e) => updateLesson(chapter.localId, lesson.localId, "videoPath", e.target.value)}
-                            />
+                            <div className="flex flex-col gap-1">
+  {lesson.videoPath ? (
+    // 🔹 Hiển thị đường dẫn sau khi upload xong
+    <div className="flex items-center gap-2">
+      <Input
+        readOnly
+        value={lesson.videoPath}
+        className="text-xs text-muted-foreground flex-1"
+      />
+      <Button
+        type="button"
+        variant="outline"
+        size="sm"
+        onClick={() =>
+          updateLesson(chapter.localId, lesson.localId, "videoPath", "")
+        }
+      >
+        Re-upload
+      </Button>
+    </div>
+  ) : (
+    // 🔹 Input upload file video
+    <Input
+      type="file"
+      accept="video/*"
+      onChange={async (e) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        try {
+          // Gọi API upload video (đã có trong courseApi.ts)
+          const videoUrl = await uploadLessonVideo(file);
+
+          // Cập nhật lại URL video vào lesson
+          updateLesson(chapter.localId, lesson.localId, "videoPath", videoUrl);
+
+          toast({
+            title: "Video uploaded",
+            description: "Uploaded successfully to Cloudinary.",
+          });
+        } catch (error) {
+          toast({
+            title: "Upload failed",
+            description: "Please try again later.",
+            variant: "destructive",
+          });
+        }
+      }}
+    />
+  )}
+</div>
+
                             <Input
                               placeholder="Slide URL"
                               value={lesson.slidePath}

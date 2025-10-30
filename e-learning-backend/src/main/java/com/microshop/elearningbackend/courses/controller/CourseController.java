@@ -10,6 +10,8 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/courses")
 @RequiredArgsConstructor
@@ -101,12 +103,21 @@ public class CourseController {
         return ApiResponse.ok(null);
     }
 
-    @PreAuthorize("hasAuthority('ROLE_GiangVien')")
-    @PostMapping(value = "/full-save", consumes = {"multipart/form-data"})  // Thêm consumes multipart
+    @PostMapping(value = "/full-save", consumes = {"multipart/form-data"})
     public ApiResponse<Integer> fullSave(
-            @RequestPart("courseData") SaveFullCourseRequest req,  // Phần JSON
-            @RequestPart(value = "imageFile", required = false) MultipartFile imageFile  // Phần file optional
+            @RequestPart("courseData") SaveFullCourseRequest req,
+            @RequestPart(value = "imageFile", required = false) MultipartFile imageFile,
+            @RequestPart(value = "videoFiles", required = false) List<MultipartFile> videoFiles
     ) {
-        return ApiResponse.ok(service.saveFullCourse(req, imageFile));  // Gọi service với file
+        return ApiResponse.ok(service.saveFullCourse(req, imageFile, videoFiles));
     }
+
+    @PreAuthorize("hasAuthority('ROLE_GiangVien')")
+    @PostMapping(value = "/lessons/upload-video", consumes = {"multipart/form-data"})
+    public ApiResponse<String> uploadLessonVideo(@RequestPart("file") MultipartFile file) {
+        String url = service.uploadLessonVideo(file);
+        return ApiResponse.ok(url);
+    }
+
+
 }

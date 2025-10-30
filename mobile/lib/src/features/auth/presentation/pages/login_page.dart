@@ -162,16 +162,16 @@ class _LoginPageState extends State<LoginPage> {
                           ),
                         ),
 
-                        const SizedBox(height: 16),
-                        Align(
-                          alignment: Alignment.centerRight,
-                          child: TextButton(
-                            onPressed: () {
-                              // TODO: sau này thêm màn Forgot Password nếu cần
-                            },
-                            child: const Text("Forgot password?"),
-                          ),
-                        ),
+                        // const SizedBox(height: 16),
+                        // Align(
+                        //   alignment: Alignment.centerRight,
+                        //   child: TextButton(
+                        //     onPressed: () {
+                        //       // TODO: sau này thêm màn Forgot Password nếu cần
+                        //     },
+                        //     child: const Text("Forgot password?"),
+                        //   ),
+                        // ),
 
                         const SizedBox(height: 12),
                         Row(

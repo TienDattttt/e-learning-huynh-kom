@@ -1,11 +1,10 @@
 package com.microshop.elearningbackend.courses.service;
+
 import com.microshop.elearningbackend.auth.service.CurrentUserService;
 
 import com.cloudinary.Cloudinary;
 import com.cloudinary.utils.ObjectUtils;
 import org.springframework.web.multipart.MultipartFile;
-import java.io.IOException;
-import java.util.Map;
 
 import com.microshop.elearningbackend.categories.repository.CourseCategoryRepository;
 import com.microshop.elearningbackend.common.exception.ApiException;
@@ -16,6 +15,7 @@ import com.microshop.elearningbackend.courses.repository.CourseRepository;
 import com.microshop.elearningbackend.learning.repository.LearningProgressRepository;
 import com.microshop.elearningbackend.users.repository.UserRepository;
 import com.microshop.elearningbackend.entity.*;
+
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.*;
 import org.springframework.data.jpa.domain.Specification;
@@ -23,11 +23,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import jakarta.persistence.criteria.Predicate;
+import java.io.IOException;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.HashMap;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -43,7 +41,6 @@ public class CourseService {
     private final LearningProgressRepository learningProgressRepo;
     private final Cloudinary cloudinary;
 
-
     /* =========================
        PUBLIC API
        ========================= */
@@ -52,24 +49,22 @@ public class CourseService {
     public Integer saveCourse(SaveCourseRequest req) {
         validateCourseInput(req);
 
-        // Lấy user từ JWT
         User teacher = current.getCurrentUser()
                 .orElseThrow(() -> new ApiException("UNAUTHORIZED"));
-
-        // bắt buộc role GiangVien
         ensureTeacherRole(teacher);
 
-        Cours entity = (req.courseId() == null) ? new Cours() : requireCourse(req.courseId());
+        final Cours entity = (req.courseId() == null) ? new Cours() : requireCourse(req.courseId());
 
-        // Nếu update -> kiểm tra quyền sở hữu
         if (entity.getId() != null) {
+            // update -> check owner
             ensureOwner(entity, teacher.getId());
         } else {
-            entity.setUsers(teacher); // set owner lần đầu tạo
+            // create -> set owner
+            entity.setUsers(teacher);
         }
 
         mapCourseFields(entity, req);
-        ensureCourseRelationsManyToOne(entity, req.categoryId()); // KHÔNG còn teacherId
+        ensureCourseRelationsManyToOne(entity, req.categoryId());
 
         if (entity.getDateCreated() == null) {
             entity.setDateCreated(LocalDateTime.now());
@@ -77,11 +72,9 @@ public class CourseService {
         return courseRepo.save(entity).getId();
     }
 
-
     @Transactional
     public Integer publishCourse(Integer courseId, Boolean publish) {
         if (courseId == null) throw new ApiException("courseId is required");
-
         User teacher = current.getCurrentUser()
                 .orElseThrow(() -> new ApiException("UNAUTHORIZED"));
         ensureTeacherRole(teacher);
@@ -126,41 +119,61 @@ public class CourseService {
     @Transactional
     public Integer saveChapter(SaveChapterRequest req) {
         validateChapterInput(req);
+
         User teacher = current.getCurrentUser()
                 .orElseThrow(() -> new ApiException("UNAUTHORIZED"));
         ensureTeacherRole(teacher);
 
-        Chapter entity = (req.chapterId() == null) ? new Chapter() : requireChapter(req.chapterId());
         Cours course = requireCourse(req.courseId());
-
-        // course phải thuộc owner hiện tại
         ensureOwner(course, teacher.getId());
+
+        Chapter entity;
+        if (req.chapterId() != null) {
+            // UPDATE
+            entity = requireChapter(req.chapterId());
+            // đảm bảo chapter này thuộc đúng course
+            if (!entity.getCourse().getId().equals(course.getId())) {
+                throw new ApiException("Chapter does not belong to this course");
+            }
+        } else {
+            // CREATE
+            entity = new Chapter();
+            entity.setCourse(course);
+        }
 
         entity.setNameChapter(req.nameChapter());
         entity.setOrderChapter(req.orderChapter());
-        entity.setCourse(course);
-
         return chapterRepo.save(entity).getId();
     }
-
 
     @Transactional
     public Integer saveLesson(SaveLessonRequest req) {
         validateLessonInput(req);
+
         User teacher = current.getCurrentUser()
                 .orElseThrow(() -> new ApiException("UNAUTHORIZED"));
         ensureTeacherRole(teacher);
 
-        CourseLesson entity = (req.courseLessonId() == null) ? new CourseLesson() : requireLesson(req.courseLessonId());
         Chapter chapter = requireChapter(req.chapterId());
         Cours course = chapter.getCourse();
-
-        // lesson thuộc chapter -> chapter thuộc course -> course phải thuộc teacher hiện tại
         ensureOwner(course, teacher.getId());
+
+        CourseLesson entity;
+        if (req.courseLessonId() != null) {
+            // UPDATE
+            entity = requireLesson(req.courseLessonId());
+            // đảm bảo lesson thuộc đúng chapter
+            if (!entity.getChapter().getId().equals(chapter.getId())) {
+                throw new ApiException("Lesson does not belong to this chapter");
+            }
+        } else {
+            // CREATE
+            entity = new CourseLesson();
+            entity.setChapter(chapter);
+        }
 
         entity.setName(req.name());
         entity.setSortOrder(req.sortOrder());
-        entity.setChapter(chapter);
         entity.setVideoPath(req.videoPath());
         entity.setSlidePath(req.slidePath());
         entity.setTypeDocument(req.typeDocument());
@@ -168,15 +181,132 @@ public class CourseService {
         return lessonRepo.save(entity).getId();
     }
 
-
     public CourseDetailDto getPublicCourseDetail(Integer courseId) {
         if (courseId == null) throw new ApiException("courseId is required");
 
-        Cours course = requirePublishedCourse(courseId);         // chỉ cho xem khi đã publish
-        List<Chapter> chapters = loadChapters(courseId);         // lấy danh sách chapter theo thứ tự
+        Cours course = requirePublishedCourse(courseId);
+        List<Chapter> chapters = loadChapters(courseId);
         Map<Integer, List<CourseLesson>> lessonsByChapter = loadLessonsGroupByChapter(chapters);
 
         return toCourseDetail(course, chapters, lessonsByChapter);
+    }
+
+    /* =========================
+       FULL SAVE (UPSERT + CLEANUP ORPHANS)
+       ========================= */
+
+    @Transactional
+    public Integer saveFullCourse(SaveFullCourseRequest req,
+                                  MultipartFile imageFile,
+                                  List<MultipartFile> videoFiles) {
+
+        User teacher = current.getCurrentUser()
+                .orElseThrow(() -> new ApiException("UNAUTHORIZED"));
+        ensureTeacherRole(teacher);
+
+        // 1) Upsert Course (giữ owner)
+        Integer courseId = saveCourse(new SaveCourseRequest(
+                req.courseId(),
+                req.name(),
+                req.description(),
+                req.image(),          // có thể bị override sau khi upload imageFile
+                req.content(),
+                req.price(),
+                req.promotionPrice(),
+                req.categoryId()
+        ));
+
+        Cours course = requireCourse(courseId);
+        ensureOwner(course, teacher.getId());
+
+        // 2) Upload image (optional)
+        if (imageFile != null && !imageFile.isEmpty()) {
+            String imageUrl = uploadCourseImage(imageFile);
+            course.setImage(imageUrl);
+            courseRepo.save(course);
+        }
+
+        // 3) Build optional video map từ videoFiles (nếu backend nhận mảng files)
+        //    Mặc định UI đã upload từng bài → đã có videoPath trong req.
+        //    Đoạn này chỉ làm fallback nếu bạn vẫn gửi videoFiles cùng lúc.
+        Map<Integer, String> fallbackVideoMap = new HashMap<>();
+        if (videoFiles != null && !videoFiles.isEmpty()) {
+            int idx = 0;
+            for (MultipartFile vf : videoFiles) {
+                String url = uploadLessonVideo(vf);
+                fallbackVideoMap.put(++idx, url); // key = 1..N theo thứ tự
+            }
+        }
+
+        // 4) Upsert Chapters & Lessons, đồng thời gom ID để cleanup orphan
+        Set<Integer> keptChapterIds = new HashSet<>();
+
+        if (req.chapters() != null && !req.chapters().isEmpty()) {
+            for (int chIdx = 0; chIdx < req.chapters().size(); chIdx++) {
+                ChapterRequest chReq = req.chapters().get(chIdx);
+
+                Integer chapterId = saveChapter(new SaveChapterRequest(
+                        chReq.chapterId(),     // giữ nguyên ID nếu có -> UPDATE
+                        courseId,
+                        chReq.nameChapter(),
+                        chIdx + 1
+                ));
+                keptChapterIds.add(chapterId);
+
+                // Lấy entity Chapter sau khi upsert
+                Chapter persistedChapter = requireChapter(chapterId);
+
+                // Upsert lessons
+                Set<Integer> keptLessonIds = new HashSet<>();
+                if (chReq.lessons() != null && !chReq.lessons().isEmpty()) {
+                    for (int lsIdx = 0; lsIdx < chReq.lessons().size(); lsIdx++) {
+                        LessonRequest lsReq = chReq.lessons().get(lsIdx);
+
+                        // Ưu tiên videoPath từ request; nếu rỗng thì lấy từ fallbackVideoMap (nếu có)
+                        String videoPath = lsReq.videoPath();
+                        if ((videoPath == null || videoPath.isBlank()) && fallbackVideoMap.containsKey(lsIdx + 1)) {
+                            videoPath = fallbackVideoMap.get(lsIdx + 1);
+                        }
+
+                        Integer lessonId = saveLesson(new SaveLessonRequest(
+                                lsReq.courseLessonId(), // giữ ID -> UPDATE
+                                chapterId,
+                                lsReq.name(),
+                                videoPath,
+                                lsReq.slidePath(),
+                                lsReq.typeDocument(),
+                                lsIdx + 1
+                        ));
+                        keptLessonIds.add(lessonId);
+                    }
+                }
+
+                // Cleanup orphan Lessons trong chapter này (những lesson không còn trong req)
+                List<CourseLesson> currentLessons =
+                        lessonRepo.findByChapter_IdInOrderBySortOrderAsc(List.of(persistedChapter.getId()));
+                for (CourseLesson ls : currentLessons) {
+                    if (!keptLessonIds.contains(ls.getId())) {
+                        lessonRepo.delete(ls);
+                    }
+                }
+            }
+        }
+
+        // 5) Cleanup orphan Chapters (những chapter đã tồn tại nhưng không còn trong req)
+        List<Chapter> currentChapters = chapterRepo.findByCourse_IdOrderByOrderChapterAsc(courseId);
+        for (Chapter ch : currentChapters) {
+            if (!keptChapterIds.contains(ch.getId())) {
+                // Do Lesson có @OnDelete(CASCADE) với Chapter, xóa Chapter sẽ xóa Lesson liên quan
+                chapterRepo.delete(ch);
+            }
+        }
+
+        // 6) Publish nếu cần
+        if (Boolean.TRUE.equals(req.publish())) {
+            publishCourse(courseId, true);
+        }
+
+        return courseId;
     }
 
     /* =========================
@@ -249,8 +379,8 @@ public class CourseService {
     private void validateCourseInput(SaveCourseRequest req) {
         if (req.name() == null || req.name().isBlank())
             throw new ApiException("Course name is required");
-        // KHÔNG còn check teacherId
     }
+
     private void ensureTeacherRole(User u) {
         if (u.getRole() == null || !"GiangVien".equalsIgnoreCase(u.getRole().getRoleName())) {
             throw new ApiException("FORBIDDEN: require teacher role");
@@ -262,7 +392,6 @@ public class CourseService {
             throw new ApiException("You are not owner of this course");
         }
     }
-
 
     private void mapCourseFields(Cours entity, SaveCourseRequest req) {
         entity.setName(req.name().trim());
@@ -283,9 +412,7 @@ public class CourseService {
         } else {
             entity.setCategories(null);
         }
-        // KHÔNG set entity.setUsers(...) ở đây (đã set ở saveCourse khi tạo mới).
     }
-
 
     private Cours requireCourse(Integer id) {
         return courseRepo.findById(id).orElseThrow(() -> new ApiException("Course not found: id=" + id));
@@ -367,7 +494,6 @@ public class CourseService {
 
         Cours course = requireCourse(id);
         ensureOwner(course, teacher.getId());
-
         courseRepo.delete(course);
     }
 
@@ -396,94 +522,61 @@ public class CourseService {
         lessonRepo.delete(lesson);
     }
 
-    @Transactional
-    public Integer saveFullCourse(SaveFullCourseRequest req, MultipartFile imageFile) {
-        User teacher = current.getCurrentUser()
-                .orElseThrow(() -> new ApiException("UNAUTHORIZED"));
-        ensureTeacherRole(teacher);
-
-        // Save course (reuse saveCourse logic)
-        SaveCourseRequest courseReq = new SaveCourseRequest(
-                req.courseId(),
-                req.name(),
-                req.description(),
-                req.image(),
-                req.content(),
-                req.price(),
-                req.promotionPrice(),
-                req.categoryId()
-        );
-        Integer courseId = saveCourse(courseReq);  // This sets owner if new
-
-        Cours course = requireCourse(courseId);
-        ensureOwner(course, teacher.getId());  // Extra check
-
-        if (imageFile != null && !imageFile.isEmpty()) {
-            String imageUrl = uploadCourseImage(imageFile);  // Gọi method upload
-            course.setImage(imageUrl);  // Update entity với URL mới
-            courseRepo.save(course);  // Save lại để update image
-        }
-
-        // Save chapters and lessons
-        if (req.chapters() != null) {
-            for (int chIdx = 0; chIdx < req.chapters().size(); chIdx++) {
-                ChapterRequest chReq = req.chapters().get(chIdx);
-                SaveChapterRequest saveChReq = new SaveChapterRequest(
-                        chReq.chapterId(),
-                        courseId,
-                        chReq.nameChapter(),
-                        chIdx + 1  // Auto-set order if needed
-                );
-                Integer chapterId = saveChapter(saveChReq);
-
-                if (chReq.lessons() != null) {
-                    for (int lsIdx = 0; lsIdx < chReq.lessons().size(); lsIdx++) {
-                        LessonRequest lsReq = chReq.lessons().get(lsIdx);
-                        SaveLessonRequest saveLsReq = new SaveLessonRequest(
-                                lsReq.courseLessonId(),
-                                chapterId,
-                                lsReq.name(),
-                                lsReq.videoPath(),
-                                lsReq.slidePath(),
-                                lsReq.typeDocument(),
-                                lsIdx + 1  // Auto-set order
-                        );
-                        saveLesson(saveLsReq);
-                    }
-                }
-            }
-        }
-
-        // Publish if requested
-        if (Boolean.TRUE.equals(req.publish())) {
-            publishCourse(courseId, true);
-        }
-
-
-
-        return courseId;
-    }
+    /* =========================
+       Cloudinary helpers
+       ========================= */
 
     public String uploadCourseImage(MultipartFile file) {
         if (file == null || file.isEmpty()) {
             throw new ApiException("No image file provided");
         }
         try {
-            // Validate: Chỉ image, size < 5MB
             String contentType = file.getContentType();
             if (contentType == null || !contentType.startsWith("image/")) {
                 throw new ApiException("File must be an image");
             }
-            if (file.getSize() > 5 * 1024 * 1024) {  // 5MB limit
+            if (file.getSize() > 5L * 1024 * 1024) {
                 throw new ApiException("Image size exceeds 5MB");
             }
 
-            // Upload to Cloudinary (folder 'courses' để tổ chức)
-            Map uploadResult = cloudinary.uploader().upload(file.getBytes(),
-                    ObjectUtils.asMap("folder", "courses", "resource_type", "image"));
-            return (String) uploadResult.get("secure_url");  // Trả URL HTTPS
+            @SuppressWarnings("unchecked")
+            Map<String, Object> uploadResult = cloudinary.uploader().upload(
+                    file.getBytes(),
+                    ObjectUtils.asMap(
+                            "folder", "courses",
+                            "resource_type", "image"
+                    )
+            );
+            return (String) uploadResult.get("secure_url");
         } catch (IOException e) {
             throw new ApiException("Image upload failed: " + e.getMessage());
+        }
+    }
+
+    public String uploadLessonVideo(MultipartFile file) {
+        if (file == null || file.isEmpty()) {
+            throw new ApiException("No video file provided");
+        }
+        try {
+            String contentType = file.getContentType();
+            if (contentType == null || !contentType.startsWith("video/")) {
+                throw new ApiException("File must be a video");
+            }
+            if (file.getSize() > 500L * 1024 * 1024) { // 500MB
+                throw new ApiException("Video file too large (max 500MB)");
+            }
+
+            @SuppressWarnings("unchecked")
+            Map<String, Object> uploadResult = cloudinary.uploader().upload(
+                    file.getBytes(),
+                    ObjectUtils.asMap(
+                            "folder", "courses/videos",
+                            "resource_type", "video"
+                    )
+            );
+            return (String) uploadResult.get("secure_url");
+        } catch (IOException e) {
+            throw new ApiException("Video upload failed: " + e.getMessage());
         }
     }
 }

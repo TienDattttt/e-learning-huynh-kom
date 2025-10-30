@@ -8,13 +8,12 @@ import Index from "./pages/Index";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import Categories from "./pages/admin/Categories";
 import Promotions from "./pages/admin/Promotions";
-import AdminRevenue from "./pages/admin/Revenue";
 import AdminStudents from "./pages/admin/Students";
 import InstructorDashboard from "./pages/instructor/InstructorDashboard";
 import Courses from "./pages/instructor/Courses";
 import CreateCourse from "./pages/instructor/CreateCourse";
 import InstructorStudents from "./pages/instructor/Students";
-import QA from "./pages/instructor/QA";
+// import QA from "./pages/instructor/QA";
 import InstructorRevenue from "./pages/instructor/Revenue";
 import NotFound from "./pages/NotFound";
 import Login from "./pages/auth/Login";
@@ -57,7 +56,6 @@ const App = () => (
             <Route path="/admin" element={<RequireAuth allowedRole="ADMIN"><AdminDashboard /></RequireAuth>} />
             <Route path="/admin/categories" element={<RequireAuth allowedRole="ADMIN"><Categories /></RequireAuth>} />
             <Route path="/admin/promotions" element={<RequireAuth allowedRole="ADMIN"><Promotions /></RequireAuth>} />
-            <Route path="/admin/revenue" element={<RequireAuth allowedRole="ADMIN"><AdminRevenue /></RequireAuth>} />
             <Route path="/admin/students" element={<RequireAuth allowedRole="ADMIN"><AdminStudents /></RequireAuth>} />
             
             {/* Instructor Routes - Protected */}
@@ -66,7 +64,7 @@ const App = () => (
             <Route path="/instructor/courses/create" element={<RequireAuth allowedRole="GIANGVIEN"><CreateCourse /></RequireAuth>} />
             <Route path="/instructor/courses/:courseId/edit" element={<RequireAuth allowedRole="GIANGVIEN"><CreateCourse /></RequireAuth>} />
             <Route path="/instructor/students" element={<RequireAuth allowedRole="GIANGVIEN"><InstructorStudents /></RequireAuth>} />
-            <Route path="/instructor/qa" element={<RequireAuth allowedRole="GIANGVIEN"><QA /></RequireAuth>} />
+            {/* <Route path="/instructor/qa" element={<RequireAuth allowedRole="GIANGVIEN"><QA /></RequireAuth>} /> */}
             <Route path="/instructor/revenue" element={<RequireAuth allowedRole="GIANGVIEN"><InstructorRevenue /></RequireAuth>} />
             
             <Route path="*" element={<NotFound />} />

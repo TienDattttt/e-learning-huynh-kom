@@ -16,6 +16,8 @@ import 'widgets/course_detail_bottom_block.dart';
 import 'widgets/course_detail_image.dart';
 import 'widgets/course_detail_info.dart';
 import 'widgets/course_detail_tabbar.dart';
+import 'package:online_course/src/features/course/data/order_api.dart';
+
 
 class CourseDetailPage extends StatefulWidget {
   const CourseDetailPage({
@@ -34,6 +36,41 @@ class CourseDetailPage extends StatefulWidget {
 }
 
 class _CourseDetailPageState extends State<CourseDetailPage> {
+  Future<void> _buyCourse(BuildContext context, int courseId) async {
+    try {
+      final api = OrderApi();
+      final result = await api.buyCourse(courseId);
+
+      if (result['status'] == 'SUCCESS') {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Mua khóa học thành công!')),
+        );
+        // Reload lại chi tiết khóa để cập nhật trạng thái purchased = true
+        _loadDetail();
+      } else if (result['status'] == 'ALREADY_OWNED') {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Bạn đã sở hữu khóa học này.')),
+        );
+        _loadDetail();
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Lỗi mua khóa học: ${result['status']}')),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Mua thất bại: $e')),
+      );
+    }
+  }
+
+  void _learnNow(BuildContext context, int courseId) {
+    // TODO: Điều hướng sang màn học (CoursePlayerPage)
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Chức năng học sẽ được thêm sau.')),
+    );
+  }
+
   @override
   void initState() {
     super.initState();
@@ -73,6 +110,8 @@ class _CourseDetailPageState extends State<CourseDetailPage> {
             return CourseDetailBottomBlock(
               detail: state.detail,
               purchased: state.purchased,
+              onBuy: () => _buyCourse(context, state.detail.id),
+              onLearnNow: () => _learnNow(context, state.detail.id),
             );
           }
           return const SizedBox.shrink();

@@ -30,7 +30,7 @@ const adminItems = [
   { title: "Dashboard", url: "/admin", icon: LayoutDashboard },
   { title: "Categories", url: "/admin/categories", icon: FolderTree },
   { title: "Promotions", url: "/admin/promotions", icon: Tag },
-  { title: "Revenue Reports", url: "/admin/revenue", icon: DollarSign },
+  // { title: "Revenue Reports", url: "/admin/revenue", icon: DollarSign },
   { title: "Students", url: "/admin/students", icon: Users },
 ];
 
@@ -38,8 +38,8 @@ const instructorItems = [
   { title: "Dashboard", url: "/instructor", icon: LayoutDashboard },
   { title: "My Courses", url: "/instructor/courses", icon: BookOpen },
   { title: "Students", url: "/instructor/students", icon: Users },
-  { title: "Q&A", url: "/instructor/qa", icon: MessageSquare },
-  { title: "Revenue", url: "/instructor/revenue", icon: DollarSign },
+  // { title: "Q&A", url: "/instructor/qa", icon: MessageSquare },
+  // { title: "Revenue", url: "/instructor/revenue", icon: DollarSign },
 ];
 
 export function DashboardSidebar({ role }: DashboardSidebarProps) {
