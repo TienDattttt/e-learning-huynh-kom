@@ -111,7 +111,6 @@ class _CourseDetailPageState extends State<CourseDetailPage> {
               detail: state.detail,
               purchased: state.purchased,
               onBuy: () => _buyCourse(context, state.detail.id),
-              onLearnNow: () => _learnNow(context, state.detail.id),
             );
           }
           return const SizedBox.shrink();

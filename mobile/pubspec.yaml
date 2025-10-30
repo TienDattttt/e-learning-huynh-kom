@@ -26,6 +26,8 @@ dependencies:
   http: ^1.1.0
   mocktail: ^1.0.0
   readmore: ^3.0.0
+  chewie: ^1.13.0
+  video_player: ^2.10.0
 
 
 dev_dependencies:

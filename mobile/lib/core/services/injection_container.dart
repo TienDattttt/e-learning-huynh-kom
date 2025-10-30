@@ -32,6 +32,12 @@ import 'package:online_course/src/features/course/pesentation/bloc/detail/course
 import 'package:online_course/src/features/course/domain/usecases/buy_course_usecase.dart';
 import 'package:online_course/src/features/course/data/order_api.dart';
 
+import 'package:online_course/src/features/learning/data/datasources/learning_remote_data_source.dart';
+import 'package:online_course/src/features/learning/data/repositories/learning_repository_impl.dart';
+import 'package:online_course/src/features/learning/domain/repositories/learning_repository.dart';
+import 'package:online_course/src/features/learning/domain/usecases/update_progress_usecase.dart';
+import 'package:online_course/src/features/learning/presentation/bloc/learning_bloc.dart';
+
 final locator = GetIt.instance;
 
 Future initLocator() async {
@@ -74,4 +80,11 @@ Future initLocator() async {
       getUseCase: locator<GetCourseDetailUseCase>(),
       buyUseCase: locator<BuyCourseUseCase>(),
     ));
+
+
+  locator
+    ..registerLazySingleton<LearningRemoteDataSource>(() => LearningRemoteDataSource())
+    ..registerLazySingleton<LearningRepository>(() => LearningRepositoryImpl(locator()))
+    ..registerLazySingleton(() => UpdateProgressUseCase(locator()))
+    ..registerFactory(() => LearningBloc(locator()));
 }

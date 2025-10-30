@@ -7,6 +7,7 @@ import 'package:online_course/src/features/course/pesentation/bloc/explore/cours
 import 'package:online_course/src/features/course/pesentation/bloc/my_course/my_course_bloc.dart';
 import 'package:online_course/src/features/course/pesentation/bloc/detail/course_detail_bloc.dart';
 import 'package:online_course/src/features/course/pesentation/bloc/favorite_course/favorite_course_bloc.dart';
+import 'package:online_course/src/features/learning/presentation/bloc/learning_bloc.dart'; // ✅ thêm import này
 import 'package:online_course/src/root_app.dart';
 import 'src/theme/app_color.dart';
 import 'package:cloudinary_flutter/cloudinary_context.dart';
@@ -30,6 +31,7 @@ class MyApp extends StatelessWidget {
         BlocProvider(create: (_) => locator.get<FavoriteCourseBloc>()),
         BlocProvider(create: (_) => locator.get<MyCourseBloc>()),
         BlocProvider(create: (_) => locator.get<CourseDetailBloc>()),
+        BlocProvider(create: (_) => locator.get<LearningBloc>()), // ✅ thêm dòng này
       ],
       child: MaterialApp(
         debugShowCheckedModeBanner: false,

@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:online_course/src/features/course/domain/entities/course_detail.dart';
+import 'package:online_course/src/features/learning/presentation/pages/learning_player_page.dart';
+import 'package:online_course/src/features/learning/presentation/bloc/learning_bloc.dart';
 import 'package:online_course/src/theme/app_color.dart';
 import 'package:online_course/src/widgets/custom_button.dart';
 
@@ -9,13 +12,11 @@ class CourseDetailBottomBlock extends StatelessWidget {
     required this.detail,
     required this.purchased,
     this.onBuy,
-    this.onLearnNow,
   });
 
   final CourseDetail detail;
   final bool purchased;
   final VoidCallback? onBuy;
-  final VoidCallback? onLearnNow;
 
   @override
   Widget build(BuildContext context) {
@@ -84,7 +85,36 @@ class CourseDetailBottomBlock extends StatelessWidget {
             child: CustomButton(
               radius: 10,
               title: purchased ? "Học ngay" : "Mua ngay",
-              onTap: purchased ? (onLearnNow ?? () {}) : (onBuy ?? () {}),
+              onTap: purchased
+                  ? () {
+                // ✅ Lấy bài học đầu tiên trong chương đầu tiên
+                if (detail.chapters.isEmpty ||
+                    detail.chapters.first.lessons.isEmpty) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                        content: Text("Chưa có bài học nào trong khóa này.")),
+                  );
+                  return;
+                }
+
+                final firstLesson = detail.chapters.first.lessons.first;
+
+                // ✅ Mở trang học video
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => BlocProvider.value(
+                      value: context.read<LearningBloc>(),
+                      child: LearningPlayerPage(
+                        videoUrl: firstLesson.videoPath ?? "",
+                        courseId: detail.id,
+                        lessonId: firstLesson.id,
+                      ),
+                    ),
+                  ),
+                );
+              }
+                  : (onBuy ?? () {}),
             ),
           ),
         ],
