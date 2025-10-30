@@ -24,7 +24,7 @@ class AccountBlock2 extends StatelessWidget {
       child: Column(
         children: [
           const SettingItem(
-            title: "Notification",
+            title: "Thông báo",
             leadingIcon: "assets/icons/bell.svg",
             bgIconColor: AppColor.purple,
           ),
@@ -36,7 +36,7 @@ class AccountBlock2 extends StatelessWidget {
             ),
           ),
           const SettingItem(
-            title: "Privacy",
+            title: "Chính sách bảo mật",
             leadingIcon: "assets/icons/shield.svg",
             bgIconColor: AppColor.orange,
           ),

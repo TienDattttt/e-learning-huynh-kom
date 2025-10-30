@@ -14,7 +14,7 @@ class ExploreAppbar extends StatelessWidget {
       children: [
         const Expanded(
           child: Text(
-            "Explore",
+            "Khám phá",
             style: TextStyle(
               color: AppColor.textColor,
               fontSize: 24,

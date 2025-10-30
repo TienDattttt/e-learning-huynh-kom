@@ -10,7 +10,7 @@ class AccountAppBar extends StatelessWidget {
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Text(
-          "Account",
+          "Tài khoản",
           style: TextStyle(
             color: AppColor.textColor,
             fontSize: 24,

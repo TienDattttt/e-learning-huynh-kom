@@ -69,7 +69,7 @@ class _LoginPageState extends State<LoginPage> {
                       children: [
                         // ===== Logo chữ =====
                         Text(
-                          "OnlineCourse",
+                          "Khóa học trực tuyến",
                           textAlign: TextAlign.center,
                           style: theme.textTheme.headlineMedium?.copyWith(
                             fontWeight: FontWeight.w700,
@@ -77,7 +77,7 @@ class _LoginPageState extends State<LoginPage> {
                         ),
                         const SizedBox(height: 8),
                         Text(
-                          "Welcome back!",
+                          "Chào mừng trở lại!",
                           textAlign: TextAlign.center,
                           style: theme.textTheme.titleMedium?.copyWith(
                             color: theme.textTheme.bodyMedium?.color?.withOpacity(0.8),
@@ -101,7 +101,7 @@ class _LoginPageState extends State<LoginPage> {
                                 ),
                                 validator: (v) {
                                   if (v == null || v.trim().isEmpty) {
-                                    return "Please enter your email";
+                                    return "Vui lòng nhập email";
                                   }
                                   final ok = RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(v.trim());
                                   if (!ok) return "Invalid email";
@@ -115,7 +115,7 @@ class _LoginPageState extends State<LoginPage> {
                                 controller: _passCtrl,
                                 obscureText: _obscure,
                                 decoration: InputDecoration(
-                                  labelText: "Password",
+                                  labelText: "Mật khẩu ",
                                   hintText: "••••••",
                                   prefixIcon: const Icon(Icons.lock_outline),
                                   suffixIcon: IconButton(
@@ -125,9 +125,9 @@ class _LoginPageState extends State<LoginPage> {
                                 ),
                                 validator: (v) {
                                   if (v == null || v.isEmpty) {
-                                    return "Please enter your password";
+                                    return "Vui lòng nhập mật khẩu";
                                   }
-                                  if (v.length < 6) return "Password must be at least 6 characters";
+                                  if (v.length < 6) return "Mật khẩu phải có ít nhất 6 ký tự";
                                   return null;
                                 },
                               ),
@@ -158,7 +158,7 @@ class _LoginPageState extends State<LoginPage> {
                               width: 22,
                               child: CircularProgressIndicator(strokeWidth: 2),
                             )
-                                : const Text("Login"),
+                                : const Text("Đăng nhập"),
                           ),
                         ),
 
@@ -178,7 +178,7 @@ class _LoginPageState extends State<LoginPage> {
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Text(
-                              "Don't have an account?",
+                              "Không tìm thấy tài khoản!",
                               style: theme.textTheme.bodyMedium,
                             ),
                             TextButton(
@@ -187,7 +187,7 @@ class _LoginPageState extends State<LoginPage> {
                                   MaterialPageRoute(builder: (_) => const RegisterPage()),
                                 );
                               },
-                              child: const Text("Register"),
+                              child: const Text("Đăng ký"),
                             )
                           ],
                         ),

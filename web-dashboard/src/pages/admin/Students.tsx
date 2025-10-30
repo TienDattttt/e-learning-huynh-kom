@@ -97,15 +97,14 @@ export default function Students() {
     <DashboardLayout role="admin">
       <div className="space-y-6 animate-fade-in">
         <div>
-          <h2 className="text-3xl font-bold tracking-tight">Student Management</h2>
-          <p className="text-muted-foreground">Monitor and manage student accounts</p>
+          <h2 className="text-3xl font-bold tracking-tight">Quản lý học viên</h2>
         </div>
 
         <div className="flex gap-4">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder="Search students by name or email..."
+              placeholder="Tìm kiếm..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-10"
@@ -115,20 +114,20 @@ export default function Students() {
 
         <Card>
           <CardHeader>
-            <CardTitle>All Students ({filteredStudents.length})</CardTitle>
+            <CardTitle>Tất cả học sinh({filteredStudents.length})</CardTitle>
           </CardHeader>
           <CardContent>
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Name</TableHead>
+                  <TableHead>Họ tên </TableHead>
                   <TableHead>Email</TableHead>
-                  <TableHead>Enrolled</TableHead>
-                  <TableHead>Completed</TableHead>
-                  <TableHead>Total Spent</TableHead>
-                  <TableHead>Join Date</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
+                  <TableHead>Đã đăng ký</TableHead>
+                  <TableHead>Đã hoàn thành</TableHead>
+                  <TableHead>Tổng chi tiêu</TableHead>
+                  <TableHead>Ngày tham gia</TableHead>
+                  <TableHead>Trạng thái</TableHead>
+                  <TableHead className="text-right">Hoạt động</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>

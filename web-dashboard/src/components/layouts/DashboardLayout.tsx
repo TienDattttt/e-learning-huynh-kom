@@ -16,7 +16,7 @@ export function DashboardLayout({ children, role }: DashboardLayoutProps) {
             <SidebarTrigger />
             <div className="ml-4 flex-1">
               <h1 className="text-xl font-semibold">
-                {role === "admin" ? "Admin Dashboard" : "Instructor Dashboard"}
+                {role === "admin" ? "Bảng điều khiển" : "Instructor Dashboard"}
               </h1>
             </div>
           </header>

@@ -11,7 +11,7 @@ class AccountRecordBlock extends StatelessWidget {
       children: [
         Expanded(
           child: SettingBox(
-            title: "12 courses",
+            title: "12 khóa học",
             icon: "assets/icons/work.svg",
           ),
         ),
@@ -20,7 +20,7 @@ class AccountRecordBlock extends StatelessWidget {
         ),
         Expanded(
           child: SettingBox(
-            title: "55 hours",
+            title: "55 giờ",
             icon: "assets/icons/time.svg",
           ),
         ),

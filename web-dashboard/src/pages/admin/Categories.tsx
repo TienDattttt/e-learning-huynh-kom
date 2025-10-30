@@ -214,19 +214,19 @@ export default function Categories() {
       <div className="space-y-6">
         <div className="flex justify-between items-center">
           <div>
-            <h2 className="text-3xl font-bold tracking-tight">Course Categories</h2>
-            <p className="text-muted-foreground">Manage multi-level course categories</p>
+            <h2 className="text-3xl font-bold tracking-tight">Danh mục khóa học</h2>
+            <p className="text-muted-foreground">Quản lý danh mục khóa học</p>
           </div>
           <Dialog open={isOpen} onOpenChange={setIsOpen}>
             <DialogTrigger asChild>
               <Button onClick={openAddDialog}>
                 <Plus className="mr-2 h-4 w-4" />
-                Add Category
+                Thêm mới danh mục
               </Button>
             </DialogTrigger>
             <DialogContent>
               <DialogHeader>
-                <DialogTitle>{currentCategory ? "Edit Category" : "Add New Category"}</DialogTitle>
+                <DialogTitle>{currentCategory ? "Chỉnh sửa danh mục" : "Thêm mới danh mục"}</DialogTitle>
               </DialogHeader>
               <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -235,7 +235,7 @@ export default function Categories() {
                     name="name"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Category Name</FormLabel>
+                        <FormLabel>Tên danh mục</FormLabel>
                         <FormControl>
                           <Input placeholder="e.g., Web Development" {...field} />
                         </FormControl>
@@ -248,7 +248,7 @@ export default function Categories() {
                     name="parentId"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Parent Category (Optional)</FormLabel>
+                        <FormLabel>Lựa chọn danh mục</FormLabel>
                         <Select onValueChange={field.onChange} defaultValue={field.value}>
                           <FormControl>
                             <SelectTrigger>
@@ -272,7 +272,7 @@ export default function Categories() {
                     name="sortOrder"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Sort Order (Optional)</FormLabel>
+                        <FormLabel>Thứ tự sắp xếp (Không bắt buộc)</FormLabel>
                         <FormControl>
                           <Input
                             type="number"
@@ -286,7 +286,7 @@ export default function Categories() {
                     )}
                   />
                   <Button type="submit" className="w-full">
-                    {currentCategory ? "Update Category" : "Create Category"}
+                    {currentCategory ? "Cập nhật danh mục" : "Thêm mới danh mục"}
                   </Button>
                 </form>
               </Form>
@@ -296,7 +296,7 @@ export default function Categories() {
 
         <Card>
           <CardHeader>
-            <CardTitle>All Categories</CardTitle>
+            <CardTitle>Tất cả khóa học</CardTitle>
           </CardHeader>
           <CardContent>
             <Table>

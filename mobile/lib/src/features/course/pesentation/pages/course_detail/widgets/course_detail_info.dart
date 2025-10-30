@@ -56,7 +56,7 @@ class CourseDetailInfo extends StatelessWidget {
         if (!purchased) const SizedBox(height: 12),
 
         const Text(
-          "About Course",
+          "Về khóa học",
           style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
         ),
         const SizedBox(height: 6),

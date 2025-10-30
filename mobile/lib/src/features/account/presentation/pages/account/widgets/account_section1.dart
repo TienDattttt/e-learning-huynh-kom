@@ -25,7 +25,7 @@ class AccountBlock1 extends StatelessWidget {
       child: Column(
         children: [
           const SettingItem(
-            title: "Setting",
+            title: "Cài đặt",
             leadingIcon: "assets/icons/setting.svg",
             bgIconColor: AppColor.blue,
           ),
@@ -37,7 +37,7 @@ class AccountBlock1 extends StatelessWidget {
             ),
           ),
           const SettingItem(
-            title: "Payment",
+            title: "Thanh toán",
             leadingIcon: "assets/icons/wallet.svg",
             bgIconColor: AppColor.green,
           ),
@@ -49,7 +49,7 @@ class AccountBlock1 extends StatelessWidget {
             ),
           ),
           SettingItem(
-            title: "Favorites",
+            title: "Sở thích",
             leadingIcon: "assets/icons/bookmark.svg",
             bgIconColor: AppColor.primary,
             // onTap: () {

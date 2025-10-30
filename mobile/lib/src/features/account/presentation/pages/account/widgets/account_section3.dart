@@ -22,7 +22,7 @@ class AccountBlock3 extends StatelessWidget {
         ],
       ),
       child: const SettingItem(
-        title: "Log Out",
+        title: "Đăng xuất",
         leadingIcon: "assets/icons/logout.svg",
         bgIconColor: AppColor.darker,
       ),

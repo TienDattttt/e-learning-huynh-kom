@@ -5,15 +5,15 @@ var profile = {
 };
 
 List categories = [
-  {"name": "All", "icon": "assets/icons/categories/all.svg"},
-  {"name": "Coding", "icon": "assets/icons/categories/coding.svg"},
-  {"name": "Education", "icon": "assets/icons/categories/education.svg"},
-  {"name": "Design", "icon": "assets/icons/categories/design.svg"},
-  {"name": "Business", "icon": "assets/icons/categories/business.svg"},
-  {"name": "Cooking", "icon": "assets/icons/categories/cooking.svg"},
-  {"name": "Music", "icon": "assets/icons/categories/music.svg"},
-  {"name": "Art", "icon": "assets/icons/categories/art.svg"},
-  {"name": "Finance", "icon": "assets/icons/categories/finance.svg"},
+  {"name": "Tất cả", "icon": "assets/icons/categories/all.svg"},
+  {"name": "Công nghệ", "icon": "assets/icons/categories/coding.svg"},
+  {"name": "Giáo dục", "icon": "assets/icons/categories/education.svg"},
+  {"name": "Thiết kế", "icon": "assets/icons/categories/design.svg"},
+  {"name": "Doanh nghiệp", "icon": "assets/icons/categories/business.svg"},
+  {"name": "Nấu ăn", "icon": "assets/icons/categories/cooking.svg"},
+  {"name": "Âm nhạc", "icon": "assets/icons/categories/music.svg"},
+  {"name": "Vẽ", "icon": "assets/icons/categories/art.svg"},
+  {"name": "Tài chính", "icon": "assets/icons/categories/finance.svg"},
 ];
 
 List coursesData = [
