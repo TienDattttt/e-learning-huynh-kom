@@ -40,5 +40,6 @@ flutter:
 
   assets:
     - assets/
+    - assets/avatar/
     - assets/icons/
     - assets/icons/categories/

@@ -1,6 +1,17 @@
 import 'dart:convert';
 
 class JwtUtil {
+
+  static Map<String, dynamic> decode(String token) {
+    try {
+      final parts = token.split('.');
+      if (parts.length != 3) return {};
+      final payload = _normalize(parts[1]);
+      return json.decode(utf8.decode(base64Url.decode(payload)));
+    } catch (_) {
+      return {};
+    }
+  }
   /// Trả về uid (int) từ access token, hoặc null nếu không đọc được
   static int? extractUserId(String token) {
     try {
@@ -12,6 +23,20 @@ class JwtUtil {
       final uid = decoded['uid'];
       if (uid is int) return uid;
       if (uid is String) return int.tryParse(uid);
+      return null;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  static String? extractFullName(String token) {
+    try {
+      final parts = token.split('.');
+      if (parts.length != 3) return null;
+      final payload = _normalize(parts[1]);
+      final decoded = json.decode(utf8.decode(base64Url.decode(payload)));
+      final name = decoded['fullName'] ?? decoded['name'] ?? decoded['sub'];
+      if (name is String) return name;
       return null;
     } catch (_) {
       return null;

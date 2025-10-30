@@ -31,6 +31,7 @@ public class JwtTokenService {
                 .expiresAt(exp)
                 .subject(user.getEmail())     // subject = email (giống identity-service)
                 .claim("uid", user.getId())
+                .claim("fullName", user.getFullName())
                 .claim("scope", scope)
                 .id(UUID.randomUUID().toString())
                 .build();
