@@ -1,36 +1,31 @@
 package com.microshop.elearningbackend.learning.repository;
 
-import com.microshop.elearningbackend.entity.AccountLockRequest;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+import org.springframework.stereotype.Repository;
+import com.microshop.elearningbackend.entity.AccountLockRequest;
 
 import java.util.List;
-import java.util.Optional;
+import java.util.Map;
 
+@Repository
 public interface AccountLockRequestRepository extends JpaRepository<AccountLockRequest, Long> {
 
-    // Kiểm tra xem có request PENDING cho (teacher, student) chưa
-    @Query("""
-        select case when count(r)>0 then true else false end
-        from AccountLockRequest r
-        where r.teacher.id = :teacherId
-          and r.student.id = :studentId
-          and r.status = 'PENDING'
-    """)
-    boolean existsPending(Integer teacherId, Integer studentId);
+    // SP 1: Tạo yêu cầu khóa
+    @Query(value = "EXEC sp_lock_request_create :teacherId, :studentId, :reason", nativeQuery = true)
+    Map<String, Object> createLockRequest(
+            @Param("teacherId") int teacherId,
+            @Param("studentId") int studentId,
+            @Param("reason") String reason);
 
-    // Lấy request PENDING hiện tại (để update lý do hoặc timestamp)
-    Optional<AccountLockRequest> findFirstByTeacher_IdAndStudent_IdAndStatus(
-            Integer teacherId, Integer studentId, String status
-    );
+    // SP 2: Danh sách yêu cầu chờ xử lý
+    @Query(value = "EXEC sp_lock_request_pending_list", nativeQuery = true)
+    List<Map<String, Object>> findPendingRequests();
 
-    // Danh sách request PENDING của 1 giảng viên
-    @Query("""
-        select r
-        from AccountLockRequest r
-        where r.teacher.id = :teacherId
-          and r.status = 'PENDING'
-        order by r.createdAt desc
-    """)
-    List<AccountLockRequest> findPendingByTeacher(Integer teacherId);
+    // SP 3: Cập nhật trạng thái
+    @Query(value = "EXEC sp_lock_request_update_status :requestId, :status", nativeQuery = true)
+    Map<String, Object> updateStatus(
+            @Param("requestId") long requestId,
+            @Param("status") String status);
 }

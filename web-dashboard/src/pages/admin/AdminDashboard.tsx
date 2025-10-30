@@ -1,108 +1,107 @@
+import { useEffect, useState } from "react";
 import { DashboardLayout } from "@/components/layouts/DashboardLayout";
 import { StatsCard } from "@/components/dashboard/StatsCard";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Users, BookOpen, DollarSign, TrendingUp } from "lucide-react";
 import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, Tooltip, Legend } from "recharts";
-
-const revenueData = [
-  { month: "Jan", revenue: 4000, courses: 24 },
-  { month: "Feb", revenue: 3000, courses: 18 },
-  { month: "Mar", revenue: 5000, courses: 32 },
-  { month: "Apr", revenue: 4500, courses: 28 },
-  { month: "May", revenue: 6000, courses: 40 },
-  { month: "Jun", revenue: 5500, courses: 35 },
-];
+import { dashboardApi } from "@/api/dashboardApi";
 
 export default function AdminDashboard() {
+  const [summary, setSummary] = useState<{ totalRevenue: number; totalOrders: number } | null>(null);
+  const [trend, setTrend] = useState<{ month: number; revenue: number }[]>([]);
+  const [topCourses, setTopCourses] = useState<
+    { courseName: string; revenue: number; orders: number }[]
+  >([]);
+
+  useEffect(() => {
+    dashboardApi.getDashboard({ year: new Date().getFullYear() }).then((data) => {
+      setSummary(data.summary);
+      setTrend(data.trend);
+      setTopCourses(data.topCourses);
+    });
+  }, []);
+
   return (
     <DashboardLayout role="admin">
       <div className="space-y-6">
         <div>
           <h2 className="text-3xl font-bold tracking-tight">Dashboard Overview</h2>
-          <p className="text-muted-foreground">Monitor your platform's performance and metrics</p>
+          <p className="text-muted-foreground">
+            Monitor platform-wide performance and metrics
+          </p>
         </div>
 
+        {/* ✅ Thống kê tổng quan */}
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           <StatsCard
-            title="Total Students"
-            value="2,543"
+            title="Total Orders"
+            value={summary ? summary.totalOrders.toLocaleString() : "..."}
             icon={Users}
-            trend={{ value: 12.5, isPositive: true }}
+            trend={{ value: 0, isPositive: true }}
             variant="primary"
-          />
-          <StatsCard
-            title="Total Courses"
-            value="156"
-            icon={BookOpen}
-            trend={{ value: 8.2, isPositive: true }}
-            variant="success"
           />
           <StatsCard
             title="Total Revenue"
-            value="$45,231"
+            value={summary ? `$${summary.totalRevenue.toLocaleString()}` : "..."}
             icon={DollarSign}
-            trend={{ value: 15.3, isPositive: true }}
+            trend={{ value: 0, isPositive: true }}
             variant="success"
           />
           <StatsCard
-            title="Active Instructors"
-            value="42"
+            title="Active Courses"
+            value={topCourses.length.toString()}
+            icon={BookOpen}
+            trend={{ value: 0, isPositive: true }}
+            variant="success"
+          />
+          <StatsCard
+            title="Instructors"
+            value="N/A"
             icon={TrendingUp}
-            trend={{ value: 5.1, isPositive: true }}
+            trend={{ value: 0, isPositive: true }}
             variant="primary"
           />
         </div>
 
-        <div className="grid gap-4 md:grid-cols-2">
-          <Card>
-            <CardHeader>
-              <CardTitle>Revenue Overview</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={revenueData}>
-                  <XAxis dataKey="month" stroke="hsl(var(--muted-foreground))" fontSize={12} />
-                  <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} />
-                  <Tooltip
-                    contentStyle={{
-                      backgroundColor: "hsl(var(--card))",
-                      border: "1px solid hsl(var(--border))",
-                      borderRadius: "var(--radius)",
-                    }}
-                  />
-                  <Legend />
-                  <Bar dataKey="revenue" fill="hsl(var(--primary))" radius={[8, 8, 0, 0]} />
-                  <Bar dataKey="courses" fill="hsl(var(--secondary))" radius={[8, 8, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
+        {/* ✅ Biểu đồ doanh thu */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Revenue Overview (Monthly)</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={300}>
+              <BarChart
+                data={trend.map((d) => ({
+                  month: `M${d.month}`,
+                  revenue: d.revenue,
+                }))}
+              >
+                <XAxis dataKey="month" />
+                <YAxis />
+                <Tooltip />
+                <Legend />
+                <Bar dataKey="revenue" fill="hsl(var(--primary))" radius={[8, 8, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>Recent Activities</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {[
-                  { action: "New course published", instructor: "John Doe", time: "2 hours ago" },
-                  { action: "Student enrolled", course: "React Mastery", time: "4 hours ago" },
-                  { action: "Revenue milestone", amount: "$45K", time: "1 day ago" },
-                  { action: "New instructor joined", name: "Jane Smith", time: "2 days ago" },
-                ].map((activity, index) => (
-                  <div key={index} className="flex items-center">
-                    <div className="flex-1">
-                      <p className="text-sm font-medium">{activity.action}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {Object.values(activity)[1]} • {activity.time}
-                      </p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+        {/* ✅ Top khóa học */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Top Courses by Revenue</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {topCourses.map((c, i) => (
+                <div key={i} className="flex justify-between border-b pb-2">
+                  <span className="font-medium">{c.courseName}</span>
+                  <span className="text-success font-semibold">${c.revenue.toLocaleString()}</span>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
       </div>
     </DashboardLayout>
   );
