@@ -25,10 +25,12 @@ export const register = async (data: { fullName: string; email: string; password
 };
 
 export const login = async (data: { email: string; password: string }) => {
-  try {
-    const response = await axios.post(`${API_BASE_URL}/login`, data);
-    return response.data;
-  } catch (error) {
-    throw error;
+  const response = await axios.post(`${API_BASE_URL}/login`, data);
+  const token = response.data?.data?.accessToken;
+
+  if (token) {
+    localStorage.setItem('accessToken', token); // ✅ lưu đúng key
   }
+
+  return response.data;
 };

@@ -1,16 +1,16 @@
 package com.microshop.elearningbackend.learning.service;
 
 import com.microshop.elearningbackend.common.ApiPage;
+import com.microshop.elearningbackend.common.ApiResponse;
 import com.microshop.elearningbackend.common.exception.ApiException;
 import com.microshop.elearningbackend.entity.Cours;
 import com.microshop.elearningbackend.entity.User;
-import com.microshop.elearningbackend.entity.AccountLockRequest;
 import com.microshop.elearningbackend.learning.dto.*;
+import com.microshop.elearningbackend.learning.repository.AccountLockRequestRepository;
 import com.microshop.elearningbackend.learning.repository.LearningProgressRepository;
 import com.microshop.elearningbackend.learning.repository.TeacherStudentRepository;
 import com.microshop.elearningbackend.users.repository.UserRepository;
 import com.microshop.elearningbackend.courses.repository.CourseRepository;
-import com.microshop.elearningbackend.learning.repository.AccountLockRequestRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
@@ -30,67 +30,47 @@ public class TeacherStudentService {
     private final CourseRepository courseRepo;
     private final AccountLockRequestRepository lockRepo;
 
-    /* ===========
-       PUBLIC API
-       =========== */
-    public void sendLockRequest(Integer teacherId, Integer studentId, String reason) {
+    /* ==========================
+       QUẢN LÝ YÊU CẦU KHÓA TK
+       ========================== */
+
+    @Transactional
+    public ApiResponse<?> createLockRequest(Integer teacherId, Integer studentId, String reason) {
         validateLockRequestInput(teacherId, studentId);
+        ensureTeacherRole(requireUser(teacherId));
+        ensureStudentRole(requireUser(studentId));
 
-        // Chặn trùng pending
-        if (lockRepo.existsPending(teacherId, studentId)) {
-            throw new ApiException("ALREADY_PENDING");
+        var result = lockRepo.createLockRequest(teacherId, studentId, reason);
+        return ApiResponse.ok(result);
+    }
+
+    @Transactional(readOnly = true)
+    public ApiResponse<?> listPendingLockRequests() {
+        var list = lockRepo.findPendingRequests();
+        return ApiResponse.ok(list);
+    }
+
+    @Transactional
+    public ApiResponse<?> updateLockStatus(long requestId, String status) {
+        if (!"APPROVED".equalsIgnoreCase(status) && !"REJECTED".equalsIgnoreCase(status)) {
+            throw new ApiException("Invalid status: " + status);
         }
-
-        User teacher = requireUser(teacherId);
-        User student = requireUser(studentId);
-        ensureTeacherRole(teacher);
-        ensureStudentRole(student);
-
-        AccountLockRequest r = new AccountLockRequest();
-        r.setTeacher(teacher);
-        r.setStudent(student);
-        r.setReason(reason);
-        r.setStatus("PENDING");
-        r.setCreatedAt(LocalDateTime.now());
-        r.setUpdatedAt(LocalDateTime.now());
-
-        lockRepo.save(r);
+        var result = lockRepo.updateStatus(requestId, status);
+        return ApiResponse.ok(result);
     }
 
-    // ============ PRIVATE HELPERS (SRP) ============
-    private void validateLockRequestInput(Integer teacherId, Integer studentId) {
-        if (teacherId == null) throw new ApiException("teacherId is required");
-        if (studentId == null) throw new ApiException("studentId is required");
-        if (teacherId.equals(studentId)) throw new ApiException("teacherId and studentId must be different");
-    }
-
-    private User requireUser(Integer userId) {
-        return userRepo.findById(userId)
-                .orElseThrow(() -> new ApiException("User not found: " + userId));
-    }
-
-    private void ensureTeacherRole(User u) {
-        if (u.getRole() == null || !"GiangVien".equalsIgnoreCase(u.getRole().getRoleName())) {
-            throw new ApiException("User is not a teacher: " + u.getId());
-        }
-    }
-
-    private void ensureStudentRole(User u) {
-        if (u.getRole() == null || !"HocVien".equalsIgnoreCase(u.getRole().getRoleName())) {
-            throw new ApiException("User is not a student: " + u.getId());
-        }
-    }
-
+    /* =====================
+       DANH SÁCH HỌC VIÊN
+       ===================== */
 
     @Transactional(readOnly = true)
     public ApiPage<StudentListItemDto> listStudents(Integer teacherId, Integer courseId, int page, int size) {
-        ensureTeacherRole(requireUser(teacherId)); // <--- thêm đảm bảo role
+        ensureTeacherRole(requireUser(teacherId));
         if (courseId != null) validateCourseBelongsToTeacher(courseId, teacherId);
 
         var p = teacherStudentRepo.findStudentsOfTeacher(teacherId, courseId, PageRequest.of(page, size));
         List<User> students = p.getContent();
 
-        // Gom id học viên để tổng hợp tiến độ theo khóa (nếu có courseId)
         Map<Integer, AggregatedProgress> agg = (courseId != null && !students.isEmpty())
                 ? aggregateProgressFor(courseId, students.stream().map(User::getId).toList())
                 : Collections.emptyMap();
@@ -112,7 +92,7 @@ public class TeacherStudentService {
 
     @Transactional(readOnly = true)
     public StudentProgressDetailDto studentProgressDetail(Integer teacherId, Integer courseId, Integer studentId) {
-        ensureTeacherRole(requireUser(teacherId)); // <--- thêm đảm bảo role
+        ensureTeacherRole(requireUser(teacherId));
         if (courseId == null) throw new ApiException("courseId is required");
         validateCourseBelongsToTeacher(courseId, teacherId);
         if (!teacherStudentRepo.studentBelongsToTeacher(teacherId, studentId, courseId)) {
@@ -144,28 +124,31 @@ public class TeacherStudentService {
         return new StudentProgressDetailDto(studentId, courseId, course.getName(), overall, last, lessons);
     }
 
-    @Transactional
-    public LockAccountResponseDto requestLockAccount(LockAccountRequestDto req) {
-        ensureTeacherRole(requireUser(req.teacherId())); // <--- thêm đảm bảo role
-        validateStudent(req.studentId());
-        if (!teacherStudentRepo.studentBelongsToTeacher(req.teacherId(), req.studentId(), null)) {
-            throw new ApiException("This student has no purchases in your courses");
-        }
-        AccountLockRequest r = upsertPendingLock(req);
-        return new LockAccountResponseDto(r.getId(), r.getStatus(), r.getCreatedAt());
-    }
-
     /* =========================
-       PRIVATE HELPERS (SRP)
+       PRIVATE HELPERS
        ========================= */
 
-    private void validateTeacher(Integer teacherId) {
-        userRepo.findById(teacherId).orElseThrow(() -> new ApiException("Teacher not found: " + teacherId));
-        // (Auth để sau; hiện chỉ kiểm tra tồn tại)
+    private void validateLockRequestInput(Integer teacherId, Integer studentId) {
+        if (teacherId == null) throw new ApiException("teacherId is required");
+        if (studentId == null) throw new ApiException("studentId is required");
+        if (teacherId.equals(studentId)) throw new ApiException("teacherId and studentId must be different");
     }
 
-    private void validateStudent(Integer studentId) {
-        userRepo.findById(studentId).orElseThrow(() -> new ApiException("Student not found: " + studentId));
+    private User requireUser(Integer userId) {
+        return userRepo.findById(userId)
+                .orElseThrow(() -> new ApiException("User not found: " + userId));
+    }
+
+    private void ensureTeacherRole(User u) {
+        if (u.getRole() == null || !"GiangVien".equalsIgnoreCase(u.getRole().getRoleName())) {
+            throw new ApiException("User is not a teacher: " + u.getId());
+        }
+    }
+
+    private void ensureStudentRole(User u) {
+        if (u.getRole() == null || !"HocVien".equalsIgnoreCase(u.getRole().getRoleName())) {
+            throw new ApiException("User is not a student: " + u.getId());
+        }
     }
 
     private void validateCourseBelongsToTeacher(Integer courseId, Integer teacherId) {
@@ -179,7 +162,6 @@ public class TeacherStudentService {
         return courseRepo.findById(id).orElseThrow(() -> new ApiException("Course not found: " + id));
     }
 
-    // Tổng hợp tiến độ: avg(percent) + lastUpdated
     private Map<Integer, AggregatedProgress> aggregateProgressFor(Integer courseId, List<Integer> studentIds) {
         Map<Integer, AggregatedProgress> map = new HashMap<>();
         var rows = lpRepo.aggregateCourseProgress(courseId, studentIds);
@@ -194,27 +176,4 @@ public class TeacherStudentService {
     }
 
     private record AggregatedProgress(int overallPercent, LocalDateTime lastUpdated) {}
-
-    private AccountLockRequest upsertPendingLock(LockAccountRequestDto req) {
-        // Tìm request PENDING hiện hữu
-        var existingOpt = lockRepo.findFirstByTeacher_IdAndStudent_IdAndStatus(
-                req.teacherId(), req.studentId(), "PENDING"
-        );
-
-        AccountLockRequest r = existingOpt.orElseGet(AccountLockRequest::new);
-
-        if (r.getId() == null) {
-            // tạo mới
-            r.setTeacher(userRepo.getReferenceById(req.teacherId()));
-            r.setStudent(userRepo.getReferenceById(req.studentId()));
-            r.setStatus("PENDING");
-            r.setCreatedAt(java.time.LocalDateTime.now());
-        }
-        // create hoặc update đều cập nhật reason + updatedAt
-        r.setReason(req.reason());
-        r.setUpdatedAt(java.time.LocalDateTime.now());
-
-        return lockRepo.save(r);
-    }
-
 }

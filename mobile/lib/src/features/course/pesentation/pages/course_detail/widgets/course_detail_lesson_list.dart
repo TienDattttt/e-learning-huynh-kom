@@ -8,10 +8,12 @@ class CourseDetailLessonList extends StatelessWidget {
     super.key,
     required this.chapters,
     required this.purchased,
+    required this.courseId, // ✅ thêm dòng này
   });
 
   final List<CourseChapter> chapters;
   final bool purchased;
+  final int courseId; // ✅ thêm dòng này
 
   @override
   Widget build(BuildContext context) {
@@ -46,6 +48,7 @@ class CourseDetailLessonList extends StatelessWidget {
                   ),
                 ),
               ),
+
               // Lessons
               if (ch.lessons.isEmpty)
                 const Padding(
@@ -56,15 +59,14 @@ class CourseDetailLessonList extends StatelessWidget {
                   ),
                 )
               else
-                ...ch.lessons.map(
-                      (l) => Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 4.0, vertical: 4),
-                    child: LessonItem(
-                      lesson: l,
-                      purchased: purchased,
-                    ),
+                ...ch.lessons.map((lesson) => Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 4.0, vertical: 4),
+                  child: LessonItem(
+                    lesson: lesson,
+                    purchased: purchased,
+                    courseId: courseId, // ✅ truyền đúng ID khóa học
                   ),
-                ),
+                )),
             ],
           ),
         );

@@ -2,32 +2,35 @@ import 'package:flutter/material.dart';
 import 'package:online_course/src/features/account/presentation/pages/account/widgets/setting_box.dart';
 
 class AccountRecordBlock extends StatelessWidget {
-  const AccountRecordBlock({super.key});
+  const AccountRecordBlock({
+    super.key,
+    required this.courseCount,
+    required this.totalHours,
+  });
+
+  final int courseCount;
+  final int totalHours;
 
   @override
   Widget build(BuildContext context) {
-    return const Row(
+    return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Expanded(
           child: SettingBox(
-            title: "12 khóa học",
+            title: "$courseCount khóa học",
             icon: "assets/icons/work.svg",
           ),
         ),
-        SizedBox(
-          width: 10,
-        ),
+        const SizedBox(width: 10),
         Expanded(
           child: SettingBox(
-            title: "55 giờ",
+            title: "$totalHours giờ",
             icon: "assets/icons/time.svg",
           ),
         ),
-        SizedBox(
-          width: 10,
-        ),
-        Expanded(
+        const SizedBox(width: 10),
+        const Expanded(
           child: SettingBox(
             title: "4.8",
             icon: "assets/icons/star.svg",

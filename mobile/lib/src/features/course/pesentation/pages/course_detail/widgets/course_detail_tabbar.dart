@@ -60,6 +60,7 @@ class _CourseDetailTabBarState extends State<CourseDetailTabBar>
           CourseDetailLessonList(
             chapters: widget.detail.chapters,
             purchased: widget.purchased,
+            courseId: widget.detail.id,
           ),
           const Center(
             child: Text(

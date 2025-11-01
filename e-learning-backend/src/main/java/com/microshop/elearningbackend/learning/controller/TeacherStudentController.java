@@ -17,32 +17,48 @@ public class TeacherStudentController {
     private final TeacherStudentService service;
     private final CurrentUserService current;
 
-    // Bước 2: danh sách học viên theo khóa (courseId có thể null)
+    // 🎓 Giảng viên: danh sách học viên
     @PreAuthorize("hasAuthority('ROLE_GiangVien')")
     @GetMapping("/students")
-    public ApiResponse<ApiPage<StudentListItemDto>> listStudents(@RequestParam(required = false) Integer courseId,
-                                                                 @RequestParam(defaultValue = "0") int page,
-                                                                 @RequestParam(defaultValue = "20") int size) {
+    public ApiResponse<ApiPage<StudentListItemDto>> listStudents(
+            @RequestParam(required = false) Integer courseId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size) {
         Integer teacherId = current.requireCurrentUserId();
         return ApiResponse.ok(service.listStudents(teacherId, courseId, page, size));
     }
 
-    // Bước 3: xem chi tiết tiến độ 1 học viên trong 1 khóa
+    // 📊 Giảng viên: xem chi tiết tiến độ học viên
     @PreAuthorize("hasAuthority('ROLE_GiangVien')")
     @GetMapping("/students/{studentId}/progress")
-    public ApiResponse<StudentProgressDetailDto> studentProgress(@RequestParam Integer courseId,
-                                                                 @PathVariable Integer studentId) {
+    public ApiResponse<StudentProgressDetailDto> studentProgress(
+            @RequestParam Integer courseId,
+            @PathVariable Integer studentId) {
         Integer teacherId = current.requireCurrentUserId();
         return ApiResponse.ok(service.studentProgressDetail(teacherId, courseId, studentId));
     }
 
-    // Bước 4: gửi yêu cầu khóa tài khoản đến Admin (PENDING)
+    // 🔒 Giảng viên: gửi yêu cầu khóa học viên
     @PreAuthorize("hasAuthority('ROLE_GiangVien')")
     @PostMapping("/students/lock-request")
-    public ApiResponse<LockAccountResponseDto> lockRequest(@RequestBody LockAccountRequestDto req) {
+    public ApiResponse<?> createLock(@RequestBody LockAccountRequestDto req) {
         Integer teacherId = current.requireCurrentUserId();
-        // ép teacherId từ JWT vào request (tránh giả mạo)
-        LockAccountRequestDto fixed = new LockAccountRequestDto(teacherId, req.studentId(), req.reason());
-        return ApiResponse.ok(service.requestLockAccount(fixed));
+        return service.createLockRequest(teacherId, req.getStudentId(), req.getReason());
+    }
+
+    // 🧑‍💼 Admin: xem danh sách yêu cầu khóa
+    @PreAuthorize("hasAuthority('ROLE_Admin')")
+    @GetMapping("/lock-requests/pending")
+    public ApiResponse<?> pendingLocks() {
+        return service.listPendingLockRequests();
+    }
+
+    // 🧑‍💼 Admin: duyệt hoặc từ chối yêu cầu
+    @PreAuthorize("hasAuthority('ROLE_Admin')")
+    @PutMapping("/lock-requests/{id}")
+    public ApiResponse<?> updateLockStatus(
+            @PathVariable long id,
+            @RequestParam String status) {
+        return service.updateLockStatus(id, status);
     }
 }

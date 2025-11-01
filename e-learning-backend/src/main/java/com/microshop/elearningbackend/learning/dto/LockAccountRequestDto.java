@@ -1,7 +1,11 @@
 package com.microshop.elearningbackend.learning.dto;
 
-public record LockAccountRequestDto(
-        Integer teacherId,
-        Integer studentId,
-        String reason
-) {}
+import lombok.Getter;
+import lombok.Setter;
+
+@Getter
+@Setter
+public class LockAccountRequestDto {
+    private int studentId;
+    private String reason;
+}

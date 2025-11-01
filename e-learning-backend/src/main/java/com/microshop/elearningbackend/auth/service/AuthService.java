@@ -66,7 +66,8 @@ public class AuthService {
                 .issuedAt(now)
                 .expiresAt(now.plus(accessTokenSeconds, ChronoUnit.SECONDS))
                 .subject(u.getEmail())                 // subject = email
-                .claim("uid", u.getId())               // tiện cho FE
+                .claim("uid", u.getId())
+                .claim("fullName", u.getFullName())
                 .claim("scope", scope)                 // chứa ROLE_*
                 .build();
 

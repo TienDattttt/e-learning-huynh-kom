@@ -81,42 +81,15 @@ class CourseDetailBottomBlock extends StatelessWidget {
           if (!purchased) const SizedBox(width: 20),
 
           // Button
-          Expanded(
-            child: CustomButton(
-              radius: 10,
-              title: purchased ? "Học ngay" : "Mua ngay",
-              onTap: purchased
-                  ? () {
-                // ✅ Lấy bài học đầu tiên trong chương đầu tiên
-                if (detail.chapters.isEmpty ||
-                    detail.chapters.first.lessons.isEmpty) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                        content: Text("Chưa có bài học nào trong khóa này.")),
-                  );
-                  return;
-                }
-
-                final firstLesson = detail.chapters.first.lessons.first;
-
-                // ✅ Mở trang học video
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => BlocProvider.value(
-                      value: context.read<LearningBloc>(),
-                      child: LearningPlayerPage(
-                        videoUrl: firstLesson.videoPath ?? "",
-                        courseId: detail.id,
-                        lessonId: firstLesson.id,
-                      ),
-                    ),
-                  ),
-                );
-              }
-                  : (onBuy ?? () {}),
-            ),
-          ),
+    Expanded(
+    child: purchased
+    ? const SizedBox.shrink()
+        : CustomButton(
+    radius: 10,
+    title: "Mua ngay",
+    onTap: onBuy ?? () {},
+    ),
+    ),
         ],
       ),
     );
