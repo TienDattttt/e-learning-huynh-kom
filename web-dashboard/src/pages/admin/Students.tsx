@@ -57,33 +57,33 @@ export default function StudentsAdmin() {
     <DashboardLayout role="admin">
       <div className="space-y-6 animate-fade-in">
         <div>
-          <h2 className="text-3xl font-bold tracking-tight">Student Account Management</h2>
+          <h2 className="text-3xl font-bold tracking-tight">Quản lý học viên</h2>
           <p className="text-muted-foreground">
-            View and manage student lock requests submitted by instructors
+            Xem và quản lý các yêu cầu khóa sinh viên do giảng viên gửi lên
           </p>
         </div>
 
         <Tabs value={tab} onValueChange={setTab}>
           <TabsList>
-            <TabsTrigger value="pending">Pending Requests</TabsTrigger>
+            <TabsTrigger value="pending">⏳ Yêu cầu đang chờ xử lý</TabsTrigger>
           </TabsList>
 
           <TabsContent value="pending">
             <Card>
               <CardHeader>
-                <CardTitle>Pending Lock Requests</CardTitle>
+                <CardTitle>Yêu cầu khóa sinh viên chờ duyệt</CardTitle>
               </CardHeader>
               <CardContent>
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Teacher</TableHead>
-                      <TableHead>Student</TableHead>
+                      <TableHead>Giảng viên</TableHead>
+                      <TableHead>Học viên</TableHead>
                       <TableHead>Email</TableHead>
-                      <TableHead>Reason</TableHead>
-                      <TableHead>Date</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead className="text-right">Actions</TableHead>
+                      <TableHead>Lý do</TableHead>
+                      <TableHead>Ngày</TableHead>
+                      <TableHead>Trạng thái</TableHead>
+                      <TableHead className="text-right">Hành động</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -123,7 +123,7 @@ export default function StudentsAdmin() {
                               }
                               disabled={mutation.isPending}
                             >
-                              <Ban className="mr-2 h-4 w-4" /> Approve Lock
+                              <Ban className="mr-2 h-4 w-4" /> Phê duyệt khóa
                             </Button>
                             <Button
                               variant="outline"
@@ -133,7 +133,7 @@ export default function StudentsAdmin() {
                               }
                               disabled={mutation.isPending}
                             >
-                              <UserCheck className="mr-2 h-4 w-4" /> Reject
+                              <UserCheck className="mr-2 h-4 w-4" /> Hủy yêu cầu
                             </Button>
                           </TableCell>
                         </TableRow>

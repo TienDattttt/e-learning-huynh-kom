@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { jwtDecode } from "d:/e-learning-huynh-kom/web-dashboard/node_modules/jwt-decode/build/esm/index";
+import { jwtDecode } from "d:/CNPM2/QLDA/GK/e-learning-huynh-kom/web-dashboard/node_modules/jwt-decode/build/esm/index";
 
 interface JwtPayload {
   uid: number;

@@ -16,7 +16,7 @@ class MyCourseAppBar extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                "My Course",
+                "Khóa học của tôi",
                 style: TextStyle(
                   color: AppColor.textColor,
                   fontSize: 24,

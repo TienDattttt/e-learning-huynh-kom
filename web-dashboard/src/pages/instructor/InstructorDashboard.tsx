@@ -39,7 +39,7 @@ export default function InstructorDashboard() {
             variant="primary"
           />
           <StatsCard
-            title="Total Students"
+            title="Tổng số học viên"
             value={summary ? summary.totalOrders.toString() : "..."}
             icon={Users}
             trend={{ value: 0, isPositive: true }}

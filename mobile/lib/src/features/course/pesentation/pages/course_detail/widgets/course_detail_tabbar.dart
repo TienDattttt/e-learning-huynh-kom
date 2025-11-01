@@ -42,8 +42,8 @@ class _CourseDetailTabBarState extends State<CourseDetailTabBar>
       labelColor: AppColor.primary,
       unselectedLabelColor: AppColor.darker,
       tabs: const [
-        Tab(child: Text("Lessons", style: TextStyle(fontSize: 16))),
-        Tab(child: Text("Exercises", style: TextStyle(fontSize: 16))),
+        Tab(child: Text("Bài học", style: TextStyle(fontSize: 16))),
+        Tab(child: Text("Bài tập", style: TextStyle(fontSize: 16))),
       ],
     );
   }
@@ -64,7 +64,7 @@ class _CourseDetailTabBarState extends State<CourseDetailTabBar>
           ),
           const Center(
             child: Text(
-              "Coming Soon!",
+              "Sắp ra mắt!",
               style: TextStyle(fontSize: 16),
             ),
           ),

@@ -28,7 +28,7 @@ const Index = () => {
                 <div className="p-2 rounded-lg bg-primary/10">
                   <Shield className="h-6 w-6 text-primary" />
                 </div>
-                <CardTitle>Admin Dashboard</CardTitle>
+                <CardTitle>Bảng điều khiển</CardTitle>
               </div>
               <CardDescription>
                 Manage categories, promotions, revenue, and platform users

@@ -191,19 +191,18 @@ export default function Promotions() {
       <div className="space-y-6">
         <div className="flex justify-between items-center">
           <div>
-            <h2 className="text-3xl font-bold tracking-tight">Promotions & Vouchers</h2>
-            <p className="text-muted-foreground">Create and manage discount vouchers</p>
+            <h2 className="text-3xl font-bold tracking-tight">Khuyến mãi và phiếu giảm giá</h2>
           </div>
           <Dialog open={isOpen} onOpenChange={setIsOpen}>
             <DialogTrigger asChild>
               <Button onClick={openAddDialog}>
                 <Plus className="mr-2 h-4 w-4" />
-                Create Voucher
+                Tạo mã khuyến mãi
               </Button>
             </DialogTrigger>
             <DialogContent>
               <DialogHeader>
-                <DialogTitle>{currentVoucher ? "Edit Voucher" : "Create New Voucher"}</DialogTitle>
+                <DialogTitle>{currentVoucher ? "Cập nhật mã giảm giá": "Tạo mã giảm giá"}</DialogTitle>
               </DialogHeader>
               <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -212,7 +211,7 @@ export default function Promotions() {
                     name="code"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Voucher Code</FormLabel>
+                        <FormLabel>Mã phiếu giảm giá</FormLabel>
                         <FormControl>
                           <Input placeholder="e.g., WELCOME2024" {...field} />
                         </FormControl>
@@ -225,7 +224,7 @@ export default function Promotions() {
                     name="discountType"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Discount Type</FormLabel>
+                        <FormLabel>Loại giảm giá</FormLabel>
                         <Select onValueChange={field.onChange} defaultValue={field.value}>
                           <FormControl>
                             <SelectTrigger>
@@ -246,7 +245,7 @@ export default function Promotions() {
                     name="value"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Discount Value</FormLabel>
+                        <FormLabel>Giá trị giảm giá</FormLabel>
                         <FormControl>
                           <Input
                             type="number"
@@ -265,7 +264,7 @@ export default function Promotions() {
                       name="startDate"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Start Date</FormLabel>
+                          <FormLabel>Ngày bắt đầu</FormLabel>
                           <FormControl>
                             <Input type="date" {...field} />
                           </FormControl>
@@ -278,7 +277,7 @@ export default function Promotions() {
                       name="endDate"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>End Date</FormLabel>
+                          <FormLabel>Ngày kết thúc</FormLabel>
                           <FormControl>
                             <Input type="date" {...field} />
                           </FormControl>
@@ -288,7 +287,7 @@ export default function Promotions() {
                     />
                   </div>
                   <Button type="submit" className="w-full">
-                    {currentVoucher ? "Update Voucher" : "Create Voucher"}
+                    {currentVoucher ? "Cập nhật mã giảm giá" : "Tạo mã giảm giá mới"}
                   </Button>
                 </form>
               </Form>
@@ -298,18 +297,18 @@ export default function Promotions() {
 
         <Card>
           <CardHeader>
-            <CardTitle>All Vouchers</CardTitle>
+            <CardTitle>Tất cả mã giảm giá</CardTitle>
           </CardHeader>
           <CardContent>
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Code</TableHead>
-                  <TableHead>Type</TableHead>
-                  <TableHead>Value</TableHead>
-                  <TableHead>Valid Period</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
+                  <TableHead>Mã</TableHead>
+                  <TableHead>Loại</TableHead>
+                  <TableHead>Giá trị</TableHead>
+                  <TableHead>Thời gian hiệu lực</TableHead>
+                  <TableHead>Trạng thái</TableHead>
+                  <TableHead className="text-right">Hoạt động</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>

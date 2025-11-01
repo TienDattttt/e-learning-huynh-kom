@@ -25,48 +25,47 @@ export default function AdminDashboard() {
     <DashboardLayout role="admin">
       <div className="space-y-6">
         <div>
-          <h2 className="text-3xl font-bold tracking-tight">Dashboard Overview</h2>
-          <p className="text-muted-foreground">
-            Monitor platform-wide performance and metrics
-          </p>
+          <h2 className="text-3xl font-bold tracking-tight">Tổng quan bảng điều khiển</h2>
+          <p className="text-muted-foreground">Giám sát hiệu suất và các chỉ số của nền tảng</p>
         </div>
 
         {/* ✅ Thống kê tổng quan */}
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           <StatsCard
-            title="Total Orders"
+
+            title="Tổng số đơn hàng"
             value={summary ? summary.totalOrders.toLocaleString() : "..."}
             icon={Users}
             trend={{ value: 0, isPositive: true }}
             variant="primary"
           />
           <StatsCard
-            title="Total Revenue"
+            title="Tổng doanh thu"
             value={summary ? `$${summary.totalRevenue.toLocaleString()}` : "..."}
             icon={DollarSign}
             trend={{ value: 0, isPositive: true }}
             variant="success"
           />
           <StatsCard
-            title="Active Courses"
+            title="Khóa học đang diễn ra"
             value={topCourses.length.toString()}
             icon={BookOpen}
             trend={{ value: 0, isPositive: true }}
             variant="success"
           />
           <StatsCard
-            title="Instructors"
+            title="Giảng viên"
             value="N/A"
             icon={TrendingUp}
             trend={{ value: 0, isPositive: true }}
             variant="primary"
           />
         </div>
-
+        <div className="grid gap-4 md:grid-cols-2">
         {/* ✅ Biểu đồ doanh thu */}
         <Card>
           <CardHeader>
-            <CardTitle>Revenue Overview (Monthly)</CardTitle>
+            <CardTitle>Tổng quan doanh thu</CardTitle>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={300}>
@@ -89,7 +88,7 @@ export default function AdminDashboard() {
         {/* ✅ Top khóa học */}
         <Card>
           <CardHeader>
-            <CardTitle>Top Courses by Revenue</CardTitle>
+            <CardTitle>Các khóa học có doanh thu cao nhất</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-3">

@@ -15,10 +15,16 @@ class AccountBlock3 extends StatelessWidget {
           title: const Text(
             "Log out",
             style: TextStyle(color: AppColor.red, fontWeight: FontWeight.w600),
-          ),
-          onTap: onLogout ?? () {},
-        ),
-      ],
+                    ),
+        ],
+      ),
+      child: SettingItem(
+        title: "Đăng xuất",
+        leadingIcon: "assets/icons/logout.svg",
+        bgIconColor: AppColor.darker,
+        onTap: onLogout ?? () {},
+      ),
     );
   }
 }
+

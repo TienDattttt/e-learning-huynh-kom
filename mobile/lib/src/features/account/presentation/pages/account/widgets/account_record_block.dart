@@ -18,14 +18,14 @@ class AccountRecordBlock extends StatelessWidget {
       children: [
         Expanded(
           child: SettingBox(
-            title: "$courseCount courses",
+            title: "$courseCount khóa học",
             icon: "assets/icons/work.svg",
           ),
         ),
         const SizedBox(width: 10),
         Expanded(
           child: SettingBox(
-            title: "$totalHours hours",
+            title: "$totalHours giờ",
             icon: "assets/icons/time.svg",
           ),
         ),

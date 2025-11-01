@@ -91,7 +91,7 @@ class _RegisterPageState extends State<RegisterPage> {
                 children: [
                   // ===== Logo chữ =====
                   Text(
-                    "OnlineCourse",
+                    "Khóa học trực tuyến",
                     textAlign: TextAlign.center,
                     style: theme.textTheme.headlineSmall?.copyWith(
                       fontWeight: FontWeight.w700,
@@ -99,7 +99,7 @@ class _RegisterPageState extends State<RegisterPage> {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    "Create your account",
+                    "Tạo tài khoản",
                     textAlign: TextAlign.center,
                     style: theme.textTheme.titleMedium?.copyWith(
                       color: theme.textTheme.bodyMedium?.color?.withOpacity(0.8),
@@ -116,12 +116,12 @@ class _RegisterPageState extends State<RegisterPage> {
                           controller: _fullCtrl,
                           textInputAction: TextInputAction.next,
                           decoration: const InputDecoration(
-                            labelText: "Full name",
+                            labelText: "Họ và tên",
                             prefixIcon: Icon(Icons.person_outline),
                           ),
                           validator: (v) {
                             if (v == null || v.trim().isEmpty) {
-                              return "Please enter your full name";
+                              return "Vui lòng nhập họ và tên của bạn";
                             }
                             return null;
                           },
@@ -140,7 +140,7 @@ class _RegisterPageState extends State<RegisterPage> {
                           ),
                           validator: (v) {
                             if (v == null || v.trim().isEmpty) {
-                              return "Please enter your email.";
+                              return "Vui lòng nhập email của bạn";
                             }
                             final ok = RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(v.trim());
                             if (!ok) return "Invalid email";
@@ -154,7 +154,7 @@ class _RegisterPageState extends State<RegisterPage> {
                           controller: _passCtrl,
                           obscureText: _obscure,
                           decoration: InputDecoration(
-                            labelText: "Password",
+                            labelText: "Mật khẩu",
                             hintText: "••••••",
                             prefixIcon: const Icon(Icons.lock_outline),
                             suffixIcon: IconButton(
@@ -164,22 +164,22 @@ class _RegisterPageState extends State<RegisterPage> {
                           ),
                           validator: (v) {
                             if (v == null || v.isEmpty) {
-                              return "Please enter your password";
+                              return "Vui lòng nhập mật khẩu của bạn";
                             }
                             if (v.length < 8) {
-                              return "Password must be at least 8 characters";
+                              return "Mật khẩu phải có ít nhất 8 ký tự";
                             }
                             if (!RegExp(r'[a-z]').hasMatch(v)) {
-                              return "Password must contain at least 1 lowercase letter";
+                              return "Mật khẩu phải chứa ít nhất 1 chữ cái thường";
                             }
                             if (!RegExp(r'[A-Z]').hasMatch(v)) {
-                              return "Password must contain at least 1 uppercase letter";
+                              return "Mật khẩu phải chứa ít nhất 1 chữ cái in hoa";
                             }
                             if (!RegExp(r'\d').hasMatch(v)) {
-                              return "Password must contain at least 1 number";
+                              return "Mật khẩu phải chứa ít nhất 1 chữ số";
                             }
                             if (!RegExp(r'[\W_]').hasMatch(v)) {
-                              return "Password must contain at least 1 special character";
+                              return "Mật khẩu phải chứa ít nhất 1 ký tự đặc biệt";
                             }
                             return null;
                           },
@@ -202,7 +202,7 @@ class _RegisterPageState extends State<RegisterPage> {
                         width: 22,
                         child: CircularProgressIndicator(strokeWidth: 2),
                       )
-                          : const Text("Create account"),
+                          : const Text("Tạo tài khoản"),
                     ),
                   ),
 
@@ -211,12 +211,12 @@ class _RegisterPageState extends State<RegisterPage> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Text(
-                        "Already have an account?",
+                        "Đã có tài khoản?",
                         style: theme.textTheme.bodyMedium,
                       ),
                       TextButton(
                         onPressed: () => Navigator.of(context).pop(),
-                        child: const Text("Login"),
+                        child: const Text("Đăng nhập"),
                       )
                     ],
                   ),

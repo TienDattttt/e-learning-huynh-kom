@@ -98,7 +98,7 @@ export function DashboardSidebar({ role }: DashboardSidebarProps) {
               <SidebarMenuItem>
                 <SidebarMenuButton onClick={handleLogout}>
                   <LogOut className="h-5 w-5" />
-                  <span>Logout</span>
+                  <span>Đăng xuất</span>
                 </SidebarMenuButton>
               </SidebarMenuItem>
             </SidebarMenu>

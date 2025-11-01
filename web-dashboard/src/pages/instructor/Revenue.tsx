@@ -63,7 +63,7 @@ export default function InstructorRevenue() {
 
         <div className="grid gap-4 md:grid-cols-3">
           <StatsCard
-            title="Total Revenue"
+            title="Tổng doanh thu"
             value="$25,720"
             icon={DollarSign}
             trend={{ value: 28.4, isPositive: true }}
