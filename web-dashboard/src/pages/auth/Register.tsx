@@ -17,9 +17,9 @@ import { toast } from "@/components/ui/use-toast"; // Để show error/success
 import { register } from "@/api/authApi"; // Import API
 
 const formSchema = z.object({
-  fullname: z.string().min(2, { message: "Full name must be at least 2 characters." }),
-  email: z.string().email({ message: "Invalid email address." }),
-  password: z.string().min(8, { message: "Password must be at least 8 characters." }),
+  fullname: z.string().min(2, { message: "Họ và tên phải có ít nhất 2 ký tự." }),
+  email: z.string().email({ message: "Địa chỉ email không hợp lệ." }),
+  password: z.string().min(8, { message: "Mật khẩu phải có ít nhất 8 ký tự." }),
 });
 
 export default function Register() {
@@ -43,17 +43,17 @@ async function onSubmit(values: z.infer<typeof formSchema>) {
       role: "GiangVien",
     });
     if (response.success) {
-      toast({ title: "Success", description: response.message || "Registration successful!" });
+      toast({ title: "Thành công", description: response.message || "Đăng ký thành công!" });
       setTimeout(() => {
         navigate("/login");
       }, 500); // Delay 0.5s để toast show rõ
     } else {
-      throw new Error(response.message || "Registration failed");
+      throw new Error(response.message || "Đăng ký thất bại!");
     }
   } catch (error: any) {
     toast({
-      title: "Error",
-      description: error.response?.data?.message || "Registration failed. Please try again.",
+      title: "Lỗi",
+      description: error.response?.data?.message || "Đăng ký thất bại. Vui lòng thử lại sau!",
       variant: "destructive",
     });
   }
@@ -62,9 +62,9 @@ async function onSubmit(values: z.infer<typeof formSchema>) {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/10 via-background to-secondary/10">
       <Card className="w-full max-w-md">
-        <CardHeader>
-          <CardTitle>Create an Account (Instructor)</CardTitle>
-          <CardDescription>Sign up as an instructor to access the LMS platform.</CardDescription>
+        <CardHeader> 
+          <CardTitle className="text-center">Tạo tài khoản (Giảng viên)</CardTitle>
+          <CardDescription>Đăng ký với tư cách giảng viên để truy cập vào nền tảng LMS.</CardDescription>
         </CardHeader>
         <CardContent>
           <Form {...form}>
@@ -74,7 +74,7 @@ async function onSubmit(values: z.infer<typeof formSchema>) {
                 name="fullname"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Full Name</FormLabel>
+                    <FormLabel>Họ và tên</FormLabel>
                     <FormControl>
                       <Input placeholder="John Doe" {...field} />
                     </FormControl>
@@ -100,7 +100,7 @@ async function onSubmit(values: z.infer<typeof formSchema>) {
                 name="password"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Password</FormLabel>
+                    <FormLabel>Mật khẩu</FormLabel>
                     <FormControl>
                       <Input type="password" placeholder="********" {...field} />
                     </FormControl>
@@ -109,12 +109,12 @@ async function onSubmit(values: z.infer<typeof formSchema>) {
                 )}
               />
               <Button type="submit" className="w-full">
-                Register as Instructor
+                Đăng ký với tư cách giảng viên
               </Button>
             </form>
           </Form>
           <p className="text-center text-sm text-muted-foreground mt-4">
-            Already have an account? <Link to="/login" className="text-primary hover:underline">Login</Link>
+            Đã có tài khoản? <Link to="/login" className="text-primary hover:underline">Đăng nhập</Link>
           </p>
         </CardContent>
       </Card>

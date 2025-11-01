@@ -48,7 +48,7 @@ export default function Login() {
         // Normalize role (remove 'ROLE_' và toUpperCase)
         const role = scope.replace('ROLE_', '').toUpperCase();
 
-        toast({ title: "Success", description: response.message || "Login successful!" });
+        toast({ title: "Thành công", description: response.message || "Đăng nhập thành công!" });
 
         // Sử dụng context để set auth state
         authContext?.login(accessToken, role);
@@ -67,13 +67,13 @@ export default function Login() {
           navigate(redirectPath, { replace: true });
         }, 0);
       } else {
-        throw new Error(response.message || "Login failed");
+        throw new Error(response.message || "Đăng nhập thất bại");
       }
     } catch (error: any) {
       console.error('Login error:', error);
       toast({
-        title: "Error",
-        description: error.response?.data?.message || "Login failed. Please check your credentials.",
+        title: "Lỗi",
+        description: error.response?.data?.message || "Đăng nhập thất bại. Vui lòng kiểm tra thông tin đăng nhập của bạn.",
         variant: "destructive",
       });
     }
@@ -83,8 +83,8 @@ export default function Login() {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/10 via-background to-secondary/10">
       <Card className="w-full max-w-md">
         <CardHeader>
-          <CardTitle>Login to Your Account</CardTitle>
-          <CardDescription>Access the LMS platform as Admin or Instructor.</CardDescription>
+          <CardTitle className="text-center">Đăng nhập vào tài khoản của bạn</CardTitle>
+          <CardDescription>Truy cập nền tảng LMS với vai trò Quản trị viên hoặc Giảng viên.</CardDescription>
         </CardHeader>
         <CardContent>
           <Form {...form}>
@@ -107,7 +107,7 @@ export default function Login() {
                 name="password"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Password</FormLabel>
+                    <FormLabel>Mật khẩu</FormLabel>
                     <FormControl>
                       <Input type="password" placeholder="********" {...field} />
                     </FormControl>
@@ -116,12 +116,12 @@ export default function Login() {
                 )}
               />
              <Button type="submit" className="w-full">
-                Login
+                Đăng nhập
               </Button>
             </form>
           </Form>
           <p className="text-center text-sm text-muted-foreground mt-4">
-            Don't have an account? <Link to="/register" className="text-primary hover:underline">Register as Instructor</Link>
+            Chưa có tài khoản? <Link to="/register" className="text-primary hover:underline">Đăng ký ngay</Link>
           </p>
         </CardContent>
       </Card>

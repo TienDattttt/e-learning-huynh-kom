@@ -25,14 +25,14 @@ export default function InstructorDashboard() {
     <DashboardLayout role="instructor">
       <div className="space-y-6">
         <div>
-          <h2 className="text-3xl font-bold tracking-tight">Instructor Dashboard</h2>
-          <p className="text-muted-foreground">Track your revenue and course performance</p>
+          <h2 className="text-3xl font-bold tracking-tight">Bảng điều khiển giảng viên</h2>
+          <p className="text-muted-foreground">Theo dõi doanh thu và hiệu quả khóa học của bạn.</p>
         </div>
 
         {/* Tổng quan */}
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           <StatsCard
-            title="Total Courses"
+            title="Tất cả khóa học"
             value={topCourses.length.toString()}
             icon={BookOpen}
             trend={{ value: 0, isPositive: true }}
@@ -46,19 +46,19 @@ export default function InstructorDashboard() {
             variant="success"
           />
           <StatsCard
-            title="Total Revenue"
+            title="Tổng doanh thu"
             value={summary ? `$${summary.totalRevenue.toLocaleString()}` : "..."}
             icon={DollarSign}
             trend={{ value: 0, isPositive: true }}
             variant="success"
           />
-          <StatsCard title="Avg. Rating" value="4.8" icon={Star} trend={{ value: 0, isPositive: true }} variant="warning" />
+          <StatsCard title="Đánh giá trung bình" value="4.8" icon={Star} trend={{ value: 0, isPositive: true }} variant="warning" />
         </div>
 
         {/* Biểu đồ */}
         <Card>
           <CardHeader>
-            <CardTitle>Monthly Revenue</CardTitle>
+            <CardTitle>Doanh thu theo tháng</CardTitle>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={300}>
@@ -81,16 +81,18 @@ export default function InstructorDashboard() {
         {/* Top Courses */}
         <Card>
           <CardHeader>
-            <CardTitle>Top Performing Courses</CardTitle>
+            <CardTitle>Các khóa học có hiệu suất cao nhất</CardTitle>
           </CardHeader>
           <CardContent>
             {topCourses.map((course, index) => (
               <div key={index} className="flex justify-between border-b py-2">
                 <div>
                   <p className="font-medium">{course.courseName}</p>
-                  <p className="text-sm text-muted-foreground">{course.orders} orders</p>
+                  <p className="text-sm text-muted-foreground">{course.orders} lượt mua</p>
                 </div>
-                <p className="font-semibold text-success">${course.revenue.toLocaleString()}</p>
+               <p className="font-semibold text-success">
+  {course.revenue.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' })}
+</p>
               </div>
             ))}
           </CardContent>

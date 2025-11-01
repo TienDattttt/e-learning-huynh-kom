@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:online_course/src/theme/app_color.dart';
+import '../widgets/setting_item.dart';
+
 
 class AccountBlock3 extends StatelessWidget {
   const AccountBlock3({super.key, this.onLogout});
@@ -8,23 +10,14 @@ class AccountBlock3 extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        ListTile(
-          leading: const Icon(Icons.logout_rounded, color: AppColor.red),
-          title: const Text(
-            "Log out",
-            style: TextStyle(color: AppColor.red, fontWeight: FontWeight.w600),
-                    ),
-        ],
-      ),
-      child: SettingItem(
-        title: "Đăng xuất",
-        leadingIcon: "assets/icons/logout.svg",
-        bgIconColor: AppColor.darker,
-        onTap: onLogout ?? () {},
-      ),
+    return SettingItem(
+      title: "Đăng xuất",
+      leadingIcon: "assets/icons/logout.svg",
+      bgIconColor: AppColor.darker,
+      onTap: onLogout ?? () {},
     );
   }
+
+
 }
 

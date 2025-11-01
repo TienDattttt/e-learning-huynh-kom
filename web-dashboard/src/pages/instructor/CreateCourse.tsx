@@ -100,8 +100,8 @@ export default function CreateCourse() {
         setCategories(flattenCategories(data));
       } catch (error) {
         toast({
-          title: "Error loading categories",
-          description: "Could not fetch categories.",
+          title: "Lỗi khi tải danh mục khóa học",
+          description: "Không thể lấy danh mục.",
           variant: "destructive",
         });
       }
@@ -122,8 +122,8 @@ export default function CreateCourse() {
         })));
       } catch (error) {
         toast({
-          title: "Error loading vouchers",
-          description: "Could not fetch active vouchers.",
+          title: "Lỗi khi tải khuyến mãi",
+          description: "Không thể lấy các voucher đang hoạt động.",
           variant: "destructive",
         });
       }
@@ -164,8 +164,8 @@ export default function CreateCourse() {
           );
         } catch (error) {
           toast({
-            title: "Error loading course",
-            description: "Could not fetch course details.",
+            title: "Lỗi khi tải khóa học",
+            description: "Không thể lấy thông tin chi tiết khóa học.",
             variant: "destructive",
           });
         } finally {
@@ -263,7 +263,7 @@ export default function CreateCourse() {
         await deleteChapter(chapterId);
       } catch (error) {
         toast({
-          title: "Error deleting chapter",
+          title: "Lỗi khi xóa chương học",
           variant: "destructive",
         });
         return;
@@ -278,7 +278,7 @@ export default function CreateCourse() {
         await deleteLesson(lessonId);
       } catch (error) {
         toast({
-          title: "Error deleting lesson",
+          title: "Lỗi khi xóa bài học",
           variant: "destructive",
         });
         return;
@@ -333,14 +333,14 @@ export default function CreateCourse() {
       }
 
       toast({
-        title: `${isEdit ? "Updated" : "Created"} successfully`,
-        description: "Your course has been saved.",
+        title: `${isEdit ? "Đã cập nhật" : "Đã tạo khóa học"} successfully`,
+        description: "Khóa học của bạn đã được lưu.",
       });
       navigate("/instructor/courses");
     } catch (error) {
       toast({
-        title: "Error",
-        description: "Failed to save the course.",
+        title: "Lỗi",
+        description: "Lỗi khi lưu khóa học.",
         variant: "destructive",
       });
     } finally {
@@ -352,25 +352,25 @@ export default function CreateCourse() {
     <DashboardLayout role="instructor">
       <div className="max-w-4xl animate-fade-in">
         <div className="mb-6">
-          <h2 className="text-3xl font-bold tracking-tight">{isEdit ? "Edit Course" : "Create New Course"}</h2>
-          <p className="text-muted-foreground">Fill in the course details and curriculum</p>
+          <h2 className="text-3xl font-bold tracking-tight">{isEdit ? "Chỉnh sửa khóa học" : "Tạo khóa học mới"}</h2>
+          <p className="text-muted-foreground">Điền thông tin chi tiết và chương trình giảng dạy của khóa học.</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle>Basic Information</CardTitle>
+              <CardTitle>Thông tin cơ bản</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
-                <Label htmlFor="title">Course Title *</Label>
-                <Input id="title" placeholder="e.g., React Advanced Patterns" required value={title} onChange={(e) => setTitle(e.target.value)} />
+                <Label htmlFor="title">Tên khóa học *</Label>
+                <Input id="title" placeholder="Ví dụ: Các mẫu nâng cao trong React" required value={title} onChange={(e) => setTitle(e.target.value)} />
               </div>
               <div>
-                <Label htmlFor="description">Description *</Label>
+                <Label htmlFor="description">Mô tả *</Label>
                 <Textarea
                   id="description"
-                  placeholder="Describe what students will learn..."
+                  placeholder="Hãy mô tả kiến thức mà học viên sẽ nhận được..."
                   rows={4}
                   required
                   value={description}
@@ -378,10 +378,10 @@ export default function CreateCourse() {
                 />
               </div>
               <div>
-                <Label htmlFor="content">Content</Label>
+                <Label htmlFor="content">Nội dung</Label>
                 <Textarea
                   id="content"
-                  placeholder="Detailed content..."
+                  placeholder="Chi tiết nội dung..."
                   rows={6}
                   value={content}
                   onChange={(e) => setContent(e.target.value)}
@@ -389,10 +389,10 @@ export default function CreateCourse() {
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label htmlFor="category">Category *</Label>
+                  <Label htmlFor="category">Danh mục *</Label>
                   <Select value={categoryId?.toString() || ''} onValueChange={(v) => setCategoryId(v ? parseInt(v) : null)} required>
                     <SelectTrigger>
-                      <SelectValue placeholder="Select category" />
+                      <SelectValue placeholder="Chọn danh mục" />
                     </SelectTrigger>
                     <SelectContent>
                       {categories.map((opt) => (
@@ -404,12 +404,12 @@ export default function CreateCourse() {
                   </Select>
                 </div>
                 <div>
-                  <Label htmlFor="price">Price ($) *</Label>
+                  <Label htmlFor="price">Giá ($) *</Label>
                   <Input id="price" type="number" placeholder="99.99" step="0.01" required value={price} onChange={(e) => setPrice(parseFloat(e.target.value))} />
                 </div>
               </div>
               <div>
-                <Label htmlFor="promotionPrice">Promotion Price ($)</Label>
+                <Label htmlFor="promotionPrice">Giá khuyến mãi ($)</Label>
                 <Input
   id="promotionPrice"
   type="number"
@@ -423,10 +423,10 @@ export default function CreateCourse() {
 />
               </div>
               <div>
-                <Label htmlFor="voucher">Apply Voucher (Optional)</Label>
+                <Label htmlFor="voucher">Áp dụng mã giảm giá (Tùy chọn)</Label>
                 <Select value={selectedVoucherId?.toString() || ''} onValueChange={(v) => setSelectedVoucherId(v ? parseInt(v) : null)}>
                   <SelectTrigger>
-                    <SelectValue placeholder="Select active voucher" />
+                    <SelectValue placeholder="Chọn mã giảm giá còn hiệu lực" />
                   </SelectTrigger>
                   <SelectContent>
                     {vouchers.map((opt) => (
@@ -438,10 +438,10 @@ export default function CreateCourse() {
                 </Select>
               </div>
               <div>
-                <Label htmlFor="image">Course Image</Label>
+                <Label htmlFor="image">Ảnh đại diện khóa học</Label>
                 {image && (
                   <div className="mb-2">
-                    <img src={image} alt="Current course image" className="w-48 h-32 object-cover rounded" />
+                    <img src={image} alt="Hình ảnh khóa học hiện tại" className="w-48 h-32 object-cover rounded" />
                   </div>
                 )}
                 <Input
@@ -450,36 +450,36 @@ export default function CreateCourse() {
                   accept="image/*"
                   onChange={(e) => setImageFile(e.target.files?.[0] || null)}
                 />
-                <p className="text-sm text-muted-foreground mt-1">Upload a new image to replace the current one (max 5MB).</p>
+                <p className="text-sm text-muted-foreground mt-1">Đăng tải ảnh mới để thay ảnh hiện tại (tối đa 5MB).</p>
               </div>
               <div className="flex items-center space-x-2">
                 <Switch id="publish" checked={publish} onCheckedChange={setPublish} />
-                <Label htmlFor="publish">Publish Course</Label>
+                <Label htmlFor="publish">Xuất bản khóa học</Label>
               </div>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle>Course Curriculum</CardTitle>
+              <CardTitle>Nội dung khóa học</CardTitle>
               <Button type="button" onClick={addChapter} variant="outline" size="sm">
                 <Plus className="mr-2 h-4 w-4" />
-                Add Chapter
+                Thêm chương học
               </Button>
             </CardHeader>
             <CardContent className="space-y-6">
               {chapters.length === 0 ? (
                 <div className="text-center py-12 text-muted-foreground">
-                  No chapters yet. Click "Add Chapter" to start building your curriculum.
+                  Chưa có chương nào. Nhấn ‘Thêm chương’ để bắt đầu xây dựng chương trình học của bạn.
                 </div>
               ) : (
                 chapters.map((chapter, chapterIndex) => (
                   <div key={chapter.localId} className="p-4 border rounded-lg space-y-4">
                     <div className="flex items-start gap-4">
                       <div className="flex-1">
-                        <Label>Chapter {chapterIndex + 1} Title</Label>
+                        <Label>Chương {chapterIndex + 1} Tiêu đề</Label>
                         <Input
-                          placeholder="e.g., Introduction to React Hooks"
+                          placeholder="Ví dụ: Giới thiệu về React Hooks"
                           className="mt-2"
                           value={chapter.title}
                           onChange={(e) => updateChapter(chapter.localId, "title", e.target.value)}
@@ -541,13 +541,13 @@ export default function CreateCourse() {
           updateLesson(chapter.localId, lesson.localId, "videoPath", videoUrl);
 
           toast({
-            title: "Video uploaded",
-            description: "Uploaded successfully to Cloudinary.",
+            title: "Video đã được tải lên",
+            description: "Đã tải lên Cloudinary thành công.",
           });
         } catch (error) {
           toast({
-            title: "Upload failed",
-            description: "Please try again later.",
+            title: "Upload không thành công",
+            description: "Vui lòng thử lại sau.",
             variant: "destructive",
           });
         }
@@ -584,7 +584,7 @@ export default function CreateCourse() {
                         onClick={() => addLesson(chapter.localId)}
                       >
                         <Plus className="mr-2 h-4 w-4" />
-                        Add Lesson
+                        Thêm bài học
                       </Button>
                     </div>
                   </div>
@@ -595,10 +595,10 @@ export default function CreateCourse() {
 
           <div className="flex justify-end gap-4">
             <Button type="button" variant="outline" onClick={() => navigate("/instructor/courses")}>
-              Cancel
+              Hủy
             </Button>
             <Button type="submit" disabled={loading}>
-              {isEdit ? "Update" : "Create"} Course {publish && "and Publish"}
+              {isEdit ? "Cập nhật" : "Tạo mới"} Khóa học {publish && "và Xuất bản"}
             </Button>
           </div>
         </form>
@@ -608,8 +608,8 @@ export default function CreateCourse() {
         <DialogContent className="sm:max-w-md">
           <div className="flex flex-col items-center justify-center py-8">
             <Loader2 className="h-8 w-8 animate-spin text-primary mb-4" />
-            <h3 className="text-lg font-semibold">Saving Course...</h3>
-            <p className="text-sm text-muted-foreground mt-2">Please wait while we process your request.</p>
+            <h3 className="text-lg font-semibold">Đang lưu khóa học...</h3>
+            <p className="text-sm text-muted-foreground mt-2">Đang xử lý yêu cầu, vui lòng chờ.</p>
           </div>
         </DialogContent>
       </Dialog>

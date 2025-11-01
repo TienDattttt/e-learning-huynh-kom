@@ -66,13 +66,13 @@ export default function InstructorStudents() {
   const lockMutation = useMutation({
     mutationFn: ({ studentId, reason }: { studentId: number; reason: string }) => sendLockRequest(studentId, reason),
     onSuccess: () => {
-      toast({ title: "Success", description: "Lock request sent to admin." });
+      toast({ title: "Thành công", description: "êu cầu khóa đã được gửi đến quản trị viên." });
       setShowLockDialog(false);
       setReason("");
       queryClient.invalidateQueries({ queryKey: ['students'] }); // Refresh list if needed
     },
     onError: (error: any) => {
-      toast({ title: "Error", description: error.message || "Failed to send request.", variant: "destructive" });
+      toast({ title: "Lỗi", description: error.message || "Đã xảy ra lỗi khi gửi yêu cầu.", variant: "destructive" });
     },
   });
 
@@ -87,35 +87,22 @@ export default function InstructorStudents() {
     <DashboardLayout role="instructor">
       <div className="space-y-6 animate-fade-in">
         <div>
-          <h2 className="text-3xl font-bold tracking-tight">My Students</h2>
-          <p className="text-muted-foreground">Monitor student progress and engagement</p>
-        </div>
-
-        <div className="flex gap-4">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Search students by name, email, or course..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10"
-            />
-          </div>
+          <h2 className="text-3xl font-bold tracking-tight">Học viên của tôi</h2>
+          <p className="text-muted-foreground">Theo dõi tiến độ học tập và mức độ tham gia của sinh viên.</p>
         </div>
 
         <Card>
           <CardHeader>
-            <CardTitle>Student Progress ({filteredStudents.length})</CardTitle>
+            <CardTitle>Tiến độ học tập của sinh viên ({filteredStudents.length})</CardTitle>
           </CardHeader>
           <CardContent>
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Student</TableHead>
-                  <TableHead>Course</TableHead>
-                  <TableHead>Progress</TableHead>
-                  <TableHead>Last Updated</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
+                  <TableHead>Học viên</TableHead>
+                  <TableHead>Khóa học</TableHead>
+                  <TableHead>Tiến độ</TableHead>
+                  <TableHead className="text-center">Hành động</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -147,7 +134,6 @@ export default function InstructorStudents() {
                           </div>
                         </div>
                       </TableCell>
-                      <TableCell>{student.lastUpdated || 'N/A'}</TableCell>
                       <TableCell className="text-right">
                         <Dialog>
                           <DialogTrigger asChild>
@@ -161,7 +147,7 @@ export default function InstructorStudents() {
                           </DialogTrigger>
                           <DialogContent className="sm:max-w-[600px]">
                             <DialogHeader>
-                              <DialogTitle>Student Details: {selectedStudent?.fullName}</DialogTitle>
+                              <DialogTitle>Chi tiết học viên: {selectedStudent?.fullName}</DialogTitle>
                             </DialogHeader>
                             {progressLoading ? (
                               <Skeleton className="h-32 w-full" />
@@ -172,25 +158,25 @@ export default function InstructorStudents() {
                                   <p>{selectedStudent?.email}</p>
                                 </div>
                                 <div>
-                                  <Label>Course</Label>
+                                  <Label>Khóa học</Label>
                                   <p>{progressData?.courseName}</p>
                                 </div>
                                 <div>
-                                  <Label>Overall Progress</Label>
+                                  <Label>Tổng quan tiến độ</Label>
                                   <Progress value={progressData?.overallPercent} className="mt-2" />
                                   <p className="text-sm text-muted-foreground mt-1">
-                                    {progressData?.overallPercent}% - Last updated: {progressData?.lastUpdated}
+                                    {progressData?.overallPercent}% - Cập nhật lần cuối: {progressData?.lastUpdated}
                                   </p>
                                 </div>
                                 <div>
-                                  <Label>Lessons</Label>
+                                  <Label>Bài học</Label>
                                   <Table>
                                     <TableHeader>
                                       <TableRow>
-                                        <TableHead>Lesson</TableHead>
-                                        <TableHead>Progress</TableHead>
-                                        <TableHead>Completed</TableHead>
-                                        <TableHead>Updated</TableHead>
+                                        <TableHead>Bài học</TableHead>
+                                        <TableHead>Tiến độ</TableHead>
+                                        <TableHead>Hoành thành</TableHead>
+                                        <TableHead>Cập nhật</TableHead>
                                       </TableRow>
                                     </TableHeader>
                                     <TableBody>
@@ -210,7 +196,7 @@ export default function InstructorStudents() {
                                   onClick={() => setShowLockDialog(true)}
                                 >
                                   <AlertTriangle className="mr-2 h-4 w-4" />
-                                  Report Fraud to Admin
+                                  Báo cáo gian lận với quản trị viên
                                 </Button>
                               </div>
                             )}

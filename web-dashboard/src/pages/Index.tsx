@@ -17,7 +17,7 @@ const Index = () => {
             Learning Management System
           </h1>
           <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-            Comprehensive platform for managing online courses, instructors, and students
+            Nền tảng toàn diện để quản lý các khóa học trực tuyến, giảng viên và sinh viên.
           </p>
         </div>
 
@@ -28,21 +28,21 @@ const Index = () => {
                 <div className="p-2 rounded-lg bg-primary/10">
                   <Shield className="h-6 w-6 text-primary" />
                 </div>
-                <CardTitle>Bảng điều khiển</CardTitle>
+                <CardTitle>Trang quản lý quản trị viên</CardTitle>
               </div>
               <CardDescription>
-                Manage categories, promotions, revenue, and platform users
+                Quản lý danh mục, khuyến mãi, doanh thu và người dùng trên nền tảng.
               </CardDescription>
             </CardHeader>
             <CardContent>
               <ul className="space-y-2 text-sm text-muted-foreground">
-                <li>• Course category management</li>
-                <li>• Voucher & promotion control</li>
-                <li>• Revenue reports & analytics</li>
-                <li>• Student management</li>
+                <li>• Quản lý danh mục khóa học</li>
+                <li>• Quản lý voucher và chương trình khuyến mãi</li>
+                <li>• Thống kê và phân tích doanh thu</li>
+                <li>• Quản lý học viên</li>
               </ul>
               <Button className="w-full mt-4">
-                Access Admin Panel
+                Truy cập bảng điều khiển quản trị viên
               </Button>
             </CardContent>
           </Card>
@@ -53,28 +53,27 @@ const Index = () => {
                 <div className="p-2 rounded-lg bg-secondary/10">
                   <UserCircle className="h-6 w-6 text-secondary" />
                 </div>
-                <CardTitle>Instructor Dashboard</CardTitle>
+                <CardTitle>Trang quản lý giảng viên</CardTitle>
               </div>
               <CardDescription>
-                Create courses, track students, and manage your teaching content
+                Tạo khóa học, theo dõi sinh viên và quản lý nội dung giảng dạy của bạn.
               </CardDescription>
             </CardHeader>
             <CardContent>
               <ul className="space-y-2 text-sm text-muted-foreground">
-                <li>• Course creation & management</li>
-                <li>• Student progress tracking</li>
-                <li>• Q&A and feedback</li>
-                <li>• Revenue analytics</li>
+                <li>• Quản lý và tạo mới khóa học</li>
+                <li>• Quản lý tiến độ sinh viên</li>
+                <li>• Thống kê doanh thu</li>
               </ul>
               <Button className="w-full mt-4" variant="secondary">
-                Access Instructor Panel
+                Truy cập bảng điều khiển giảng viên
               </Button>
             </CardContent>
           </Card>
         </div>
         <div className="text-center mt-8">
           <p className="text-muted-foreground">
-            Ready to get started? <Link to="/register" className="text-primary hover:underline">Register</Link> or <Link to="/login" className="text-primary hover:underline">Login</Link>
+            Bạn đã sẵn sàng bắt đầu chưa? <Link to="/register" className="text-primary hover:underline">Đăng ký</Link> or <Link to="/login" className="text-primary hover:underline">Đăng nhập</Link>
           </p>
         </div>
       </div>

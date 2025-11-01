@@ -74,18 +74,18 @@ export default function Courses() {
       <div className="space-y-6">
         <div className="flex justify-between items-center">
           <div>
-            <h2 className="text-3xl font-bold tracking-tight">My Courses</h2>
-            <p className="text-muted-foreground">Create and manage your course content</p>
+            <h2 className="text-3xl font-bold tracking-tight">Khóa học của tôi</h2>
+            <p className="text-muted-foreground">Tạo và quản lý nội dung khóa học của bạn.</p>
           </div>
           <Button onClick={() => navigate("/instructor/courses/create")}>
             <Plus className="mr-2 h-4 w-4" />
-            Create Course
+            Tạo mới khóa học
           </Button>
         </div>
 
         <Card>
           <CardHeader>
-            <CardTitle>All Courses</CardTitle>
+            <CardTitle>Danh sách khóa học</CardTitle>
           </CardHeader>
           <CardContent>
             {loading ? (
@@ -94,12 +94,12 @@ export default function Courses() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Title</TableHead>
-                    <TableHead>Category</TableHead>
-                    <TableHead>Price</TableHead>
-                    <TableHead>Students</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
+                    <TableHead>Tiêu đề</TableHead>
+                    <TableHead>Danh mục</TableHead>
+                    <TableHead>Giá</TableHead>
+                    {/* <TableHead>Students</TableHead> */}
+                    <TableHead>Trạng thái</TableHead>
+                    <TableHead className="text-center">Hành động</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -107,17 +107,14 @@ export default function Courses() {
                     <TableRow key={course.courseId}>
                       <TableCell className="font-medium">{course.name}</TableCell>
                       <TableCell>{course.categoryName}</TableCell>
-                      <TableCell>${course.price}</TableCell>
-                      <TableCell>{course.students}</TableCell>
+                      <TableCell>{course.price}đ</TableCell>
+                      {/* <TableCell>{course.students}</TableCell> */}
                       <TableCell>
                         <Badge variant={course.status ? "default" : "secondary"}>
-                          {course.status ? "published" : "draft"}
+                          {course.status ? "Đã xuất bản" : "Bản nháp"}
                         </Badge>
                       </TableCell>
                       <TableCell className="text-right">
-                        <Button variant="ghost" size="icon" onClick={() => navigate(`/instructor/courses/${course.courseId}/edit`)}>
-                          <Eye className="h-4 w-4" />
-                        </Button>
                         <Button variant="ghost" size="icon" onClick={() => navigate(`/instructor/courses/${course.courseId}/edit`)}>
                           <Edit className="h-4 w-4" />
                         </Button>

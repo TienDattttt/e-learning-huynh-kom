@@ -39,7 +39,7 @@ export function StatsCard({ title, value, icon: Icon, trend, variant = "default"
         {trend && (
           <p className={`text-xs ${trend.isPositive ? "text-success" : "text-destructive"} mt-1`}>
             {trend.isPositive ? "+" : ""}
-            {trend.value}% from last month
+            {trend.value}% từ tháng trước
           </p>
         )}
       </CardContent>

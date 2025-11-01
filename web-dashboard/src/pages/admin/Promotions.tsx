@@ -53,9 +53,9 @@ interface Voucher {
 }
 
 const formSchema = z.object({
-  code: z.string().min(1, { message: "Voucher code is required" }),
+  code: z.string().min(1, { message: "Mã voucher là bắt buộc" }),
   discountType: z.enum(["percentage", "fixed"]),
-  value: z.number().min(1, { message: "Discount value must be at least 1" }),
+  value: z.number().min(1, { message: "Giá trị giảm giá phải tối thiểu là 1" }),
   startDate: z.string().optional(),
   endDate: z.string().optional(),
 });
@@ -98,8 +98,8 @@ export default function Promotions() {
       setVouchers(mapped);
     } catch (error) {
       toast({
-        title: "Error",
-        description: "Failed to load vouchers.",
+        title: "Lỗi",
+        description: "Lỗi khi tải khuyến mãi",
         variant: "destructive",
       });
     }
@@ -143,16 +143,16 @@ export default function Promotions() {
       };
       await saveDiscount(req);
       toast({
-        title: currentVoucher ? "Voucher updated" : "Voucher created",
-        description: "The voucher has been successfully saved.",
+        title: currentVoucher ? "Đã cập nhật khuyến mãi" : "Đã tạo khuyến mãi",
+        description: "Khuyến mãi đã được lưu",
       });
       setIsOpen(false);
       setCurrentVoucher(null);
       fetchVouchers();
     } catch (error) {
       toast({
-        title: "Error",
-        description: "Failed to save voucher.",
+        title: "Lỗi",
+        description: "Lỗi khi lưu khuyến mãi.",
         variant: "destructive",
       });
     }
@@ -162,15 +162,15 @@ export default function Promotions() {
     try {
       await disableDiscount(id);
       toast({
-        title: "Voucher disabled",
-        description: "The voucher has been disabled.",
+        title: "Khuyến mãi bị vô hiệu hóa",
+        description: "Khuyến mãi đã bị vô hiệu hóa.",
         variant: "destructive",
       });
       fetchVouchers();
     } catch (error) {
       toast({
-        title: "Error",
-        description: "Failed to disable voucher.",
+        title: "Lỗi",
+        description: "Lỗi khi vô hiệu hóa khuyến mãi.",
         variant: "destructive",
       });
     }
@@ -320,12 +320,22 @@ export default function Promotions() {
                       {voucher.discountType === "percentage" ? `${voucher.value}%` : `$${voucher.value}`}
                     </TableCell>
                     <TableCell>
-                      {formatDate(voucher.startDate)} - {formatDate(voucher.endDate)}
-                    </TableCell>
+  <div className="flex flex-wrap gap-2">
+    <span className="px-2 py-1 text-xs rounded-full bg-green-100 text-green-700">
+      {formatDate(voucher.startDate)}
+    </span>
+    <span className="text-gray-500">→</span>
+    <span className="px-2 py-1 text-xs rounded-full bg-gray-100 text-gray-700">
+      {formatDate(voucher.endDate)}
+    </span>
+  </div>
+</TableCell>
+
                     <TableCell>
                       <Badge variant={voucher.status === "active" ? "default" : "secondary"}>
-                        {voucher.status}
-                      </Badge>
+  {voucher.status === "active" ? "Đang hoạt động" : "Hết hạn"}
+</Badge>
+
                     </TableCell>
                     <TableCell className="text-right">
                       <Button variant="ghost" size="icon" onClick={() => openEditDialog(voucher)}>

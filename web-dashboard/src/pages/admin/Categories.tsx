@@ -86,11 +86,11 @@ export default function Categories() {
       const flat = flattenCategories(data);
       setCategories(flat);
       const opts = buildCategoryOptions(data);
-      setOptions([{ value: "none", label: "None (Root Category)" }, ...opts]);
+      setOptions([{ value: "none", label: "Không có (Danh mục gốc)" }, ...opts]);
     } catch (error) {
       toast({
-        title: "Error",
-        description: "Failed to load categories.",
+        title: "Lỗi",
+        description: "Đã xảy ra lỗi khi tải danh mục.",
         variant: "destructive",
       });
     }
@@ -159,16 +159,16 @@ export default function Categories() {
       };
       await saveCategory(req);
       toast({
-        title: currentCategory ? "Category updated" : "Category added",
-        description: "The category has been successfully saved.",
+        title: currentCategory ? "Đã cập nhật danh mục" : "Đã thêm danh mục",
+        description: "Danh mục đã được lưu thành công.",
       });
       setIsOpen(false);
       setCurrentCategory(null);
       fetchTree();
     } catch (error) {
       toast({
-        title: "Error",
-        description: "Failed to save category.",
+        title: "Lỗi",
+        description: "Lỗi khi lưu danh mục",
         variant: "destructive",
       });
     }
@@ -185,15 +185,15 @@ export default function Categories() {
       };
       await saveCategory(req);
       toast({
-        title: "Category deleted",
-        description: "The category has been removed (soft delete).",
+        title: "Đã hóa danh mục",
+        description: "Danh mục đã được xóa.",
         variant: "destructive",
       });
       fetchTree();
     } catch (error) {
       toast({
-        title: "Error",
-        description: "Failed to delete category.",
+        title: "Lỗi",
+        description: "Lỗi khi xóa danh mục.",
         variant: "destructive",
       });
     }
@@ -252,7 +252,7 @@ export default function Categories() {
                         <Select onValueChange={field.onChange} defaultValue={field.value}>
                           <FormControl>
                             <SelectTrigger>
-                              <SelectValue placeholder="Select parent category" />
+                              <SelectValue placeholder="Chọn danh mục cha" />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
@@ -302,9 +302,9 @@ export default function Categories() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Parent Category</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
+                  <TableHead>Tên</TableHead>
+                  <TableHead>Danh mục cha</TableHead>
+                  <TableHead className="text-right">Hành động</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>

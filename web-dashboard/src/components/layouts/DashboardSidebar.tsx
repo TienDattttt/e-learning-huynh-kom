@@ -28,16 +28,16 @@ interface DashboardSidebarProps {
 
 const adminItems = [
   { title: "Dashboard", url: "/admin", icon: LayoutDashboard },
-  { title: "Categories", url: "/admin/categories", icon: FolderTree },
-  { title: "Promotions", url: "/admin/promotions", icon: Tag },
+  { title: "Danh mục khóa học", url: "/admin/categories", icon: FolderTree },
+  { title: "Chương trình khuyến mãi", url: "/admin/promotions", icon: Tag },
   // { title: "Revenue Reports", url: "/admin/revenue", icon: DollarSign },
-  { title: "Students", url: "/admin/students", icon: Users },
+  { title: "Học viên", url: "/admin/students", icon: Users },
 ];
 
 const instructorItems = [
   { title: "Dashboard", url: "/instructor", icon: LayoutDashboard },
-  { title: "My Courses", url: "/instructor/courses", icon: BookOpen },
-  { title: "Students", url: "/instructor/students", icon: Users },
+  { title: "Khóa học của tôi", url: "/instructor/courses", icon: BookOpen },
+  { title: "Học viên", url: "/instructor/students", icon: Users },
   // { title: "Q&A", url: "/instructor/qa", icon: MessageSquare },
   // { title: "Revenue", url: "/instructor/revenue", icon: DollarSign },
 ];
@@ -75,7 +75,7 @@ export function DashboardSidebar({ role }: DashboardSidebarProps) {
         </div>
 
         <SidebarGroup>
-          <SidebarGroupLabel>Navigation</SidebarGroupLabel>
+          <SidebarGroupLabel>Điều hướng</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {items.map((item) => (
