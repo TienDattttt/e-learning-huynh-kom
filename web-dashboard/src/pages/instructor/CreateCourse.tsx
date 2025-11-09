@@ -333,7 +333,7 @@ export default function CreateCourse() {
       }
 
       toast({
-        title: `${isEdit ? "Đã cập nhật" : "Đã tạo khóa học"} successfully`,
+        title: `${isEdit ? "Đã cập nhật" : "Đã tạo khóa học"} thành công`,
         description: "Khóa học của bạn đã được lưu.",
       });
       navigate("/instructor/courses");
@@ -404,7 +404,7 @@ export default function CreateCourse() {
                   </Select>
                 </div>
                 <div>
-                  <Label htmlFor="price">Giá ($) *</Label>
+                  <Label htmlFor="price">Giá (đ) *</Label>
                   <Input id="price" type="number" placeholder="99.99" step="0.01" required value={price} onChange={(e) => setPrice(parseFloat(e.target.value))} />
                 </div>
               </div>

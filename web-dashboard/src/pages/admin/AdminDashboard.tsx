@@ -41,7 +41,7 @@ export default function AdminDashboard() {
           />
           <StatsCard
             title="Tổng doanh thu"
-            value={summary ? `$${summary.totalRevenue.toLocaleString()}` : "..."}
+            value={summary ? `${summary.totalRevenue.toLocaleString()}đ` : "..."}
             icon={DollarSign}
             trend={{ value: 0, isPositive: true }}
             variant="success"
